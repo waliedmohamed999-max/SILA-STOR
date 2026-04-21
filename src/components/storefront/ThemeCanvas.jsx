@@ -132,31 +132,31 @@ function renderSection({
   if (section.type === "categoryList") {
     const sectionCategories = section.categories?.length ? section.categories : categories;
     return (
-      <section id="categories" className="space-y-4">
+      <section id="categories" className="space-y-3 sm:space-y-4">
         <SectionHeading title={section.title} subtitle={section.subtitle} theme={theme} />
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] sm:grid sm:overflow-visible sm:pb-0 sm:grid-cols-2 xl:grid-cols-3 [&::-webkit-scrollbar]:hidden">
           {sectionCategories.map((item) => (
             <button
               key={item}
               type="button"
               onClick={() => setCategory(item)}
-              className="group relative overflow-hidden rounded-2xl border text-right transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-200/60"
+              className="group relative min-w-[300px] snap-start overflow-hidden rounded-2xl border text-right transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-200/60 sm:min-w-0"
               style={{ background: theme.surface, borderColor: category === item ? theme.primary : "#e2e8f0", color: theme.text }}
             >
-              <div className="grid min-h-[146px] gap-3 sm:grid-cols-[1fr_140px]">
-                <div className="flex flex-col justify-between p-5">
+              <div className="grid min-h-[118px] grid-cols-[1fr_112px] gap-0 sm:min-h-[146px] sm:grid-cols-[1fr_140px]">
+                <div className="flex min-w-0 flex-col justify-between p-3 sm:p-5">
                   <div>
                     <span
-                      className="inline-flex rounded-full px-3 py-1 text-xs font-black text-white"
+                      className="inline-flex rounded-full px-2.5 py-1 text-[11px] font-black text-white sm:px-3 sm:text-xs"
                       style={{ background: category === item ? theme.primary : theme.secondary }}
                     >
                       {category === item ? "التصنيف الحالي" : "استعرض"}
                     </span>
-                    <h3 className="mt-4 font-heading text-2xl font-black" style={{ color: theme.text }}>{categoryLabel(item)}</h3>
-                    <p className="mt-2 text-sm leading-6" style={{ color: theme.mutedText }}>{categoryVisuals[item]?.subtitle}</p>
+                    <h3 className="mt-3 truncate font-heading text-lg font-black sm:mt-4 sm:text-2xl" style={{ color: theme.text }}>{categoryLabel(item)}</h3>
+                    <p className="mt-1 line-clamp-2 text-xs leading-5 sm:mt-2 sm:text-sm sm:leading-6" style={{ color: theme.mutedText }}>{categoryVisuals[item]?.subtitle}</p>
                   </div>
                 </div>
-                <div className="relative min-h-[146px]">
+                <div className="relative min-h-[118px] sm:min-h-[146px]">
                   <img src={categoryVisuals[item]?.image} alt={categoryLabel(item)} className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]" />
                 </div>
               </div>
@@ -215,7 +215,7 @@ function renderSection({
     return (
       <section className="space-y-4">
         <SectionHeading title={section.title} subtitle={section.subtitle} theme={theme} />
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
           {scoped.map((product) => (
             <ProductCard key={product.id} product={product} theme={theme} preview={preview} addItem={addItem} />
           ))}
@@ -228,14 +228,14 @@ function renderSection({
     return (
       <section className="space-y-4">
         <SectionHeading title={section.title} subtitle="" theme={theme} />
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:none] sm:grid sm:overflow-visible sm:pb-0 sm:grid-cols-3 sm:gap-4 [&::-webkit-scrollbar]:hidden">
           {(section.items || []).map((item) => {
             const Icon = trustIcons[item.icon] || ShieldCheck;
             return (
-              <div key={item.id} className="rounded-2xl border p-5" style={{ background: theme.surface, borderColor: "#e2e8f0" }}>
-                <Icon size={22} style={{ color: theme.primary }} />
-                <h3 className="mt-4 font-heading text-lg font-black" style={{ color: theme.text }}>{item.title}</h3>
-                <p className="mt-2 text-sm leading-6" style={{ color: theme.mutedText }}>{item.text}</p>
+              <div key={item.id} className="min-w-[280px] snap-start rounded-2xl border p-4 sm:min-w-0 sm:p-5" style={{ background: theme.surface, borderColor: "#e2e8f0" }}>
+                <Icon size={20} style={{ color: theme.primary }} />
+                <h3 className="mt-3 font-heading text-base font-black sm:mt-4 sm:text-lg" style={{ color: theme.text }}>{item.title}</h3>
+                <p className="mt-2 text-xs leading-5 sm:text-sm sm:leading-6" style={{ color: theme.mutedText }}>{item.text}</p>
               </div>
             );
           })}
@@ -246,11 +246,11 @@ function renderSection({
 
   if (section.type === "newsletter") {
     return (
-      <section className="rounded-2xl border p-6" style={{ background: theme.surface, borderColor: "#e2e8f0" }}>
+      <section className="rounded-2xl border p-4 sm:p-6" style={{ background: theme.surface, borderColor: "#e2e8f0" }}>
         <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
           <SectionHeading title={section.title} subtitle={section.subtitle} theme={theme} />
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <label className="flex min-w-0 sm:min-w-[260px] items-center gap-2 rounded-2xl border px-3 py-2" style={{ borderColor: "#e2e8f0" }}>
+          <div className="grid gap-2 sm:flex sm:flex-row">
+            <label className="flex min-w-0 items-center gap-2 rounded-2xl border px-3 py-2 sm:min-w-[260px]" style={{ borderColor: "#e2e8f0" }}>
               <Mail size={16} className="text-slate-400" />
               <input placeholder={section.placeholder} className="w-full bg-transparent text-sm outline-none" style={{ color: theme.text }} />
             </label>
@@ -268,8 +268,8 @@ function renderSection({
     return (
       <section id="catalog" className="space-y-5">
         <SectionHeading title={section.title} subtitle={section.subtitle} theme={theme} />
-        <div className="rounded-2xl border p-4" style={{ background: theme.surface, borderColor: "#e2e8f0" }}>
-          <div className="grid gap-3 xl:grid-cols-[1fr_auto_auto]">
+        <div className="rounded-2xl border p-3 sm:p-4" style={{ background: theme.surface, borderColor: "#e2e8f0" }}>
+          <div className="grid gap-2 sm:gap-3 xl:grid-cols-[1fr_auto_auto]">
             {section.allowSearch && (
               <label className="flex items-center gap-2 rounded-2xl border px-3 py-2" style={{ background: theme.surface, borderColor: "#e2e8f0" }}>
                 <Search size={18} className="text-slate-400" />
@@ -382,15 +382,15 @@ function HeroSlider({ section, theme, preview }) {
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-200 shadow-premium dark:border-slate-800" style={{ background: theme.surface }}>
       <div className={`grid ${theme.layout === "campaign" ? "lg:grid-cols-[.95fr_1.05fr]" : "lg:grid-cols-[1.05fr_.95fr]"}`}>
-        <div className="flex min-h-[340px] flex-col justify-center p-5 sm:min-h-[420px] sm:p-8 xl:p-10">
+        <div className="order-2 flex flex-col justify-center p-4 sm:p-8 lg:order-1 lg:min-h-[420px] xl:p-10">
           <Badge tone="accent" className="w-fit">{activeSlide.badge}</Badge>
-          <h1 className="mt-5 max-w-2xl text-balance font-heading text-3xl font-black tracking-tight sm:text-5xl" style={{ color: theme.text }}>
+          <h1 className="mt-4 max-w-2xl text-balance font-heading text-2xl font-black tracking-tight sm:mt-5 sm:text-5xl" style={{ color: theme.text }}>
             {activeSlide.title}
           </h1>
-          <p className="mt-4 max-w-xl text-sm leading-7 sm:text-base" style={{ color: theme.mutedText }}>
+          <p className="mt-3 max-w-xl text-sm leading-7 sm:mt-4 sm:text-base" style={{ color: theme.mutedText }}>
             {activeSlide.subtitle}
           </p>
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:mt-6 sm:flex sm:flex-row">
             <ActionButton preview={preview} target={activeSlide.primaryActionTarget} primary theme={theme}>
               {activeSlide.primaryActionLabel}
               <ArrowRight size={18} />
@@ -400,7 +400,7 @@ function HeroSlider({ section, theme, preview }) {
             </ActionButton>
           </div>
           {!!activeSlide.stats?.length && (
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <div className="mt-5 grid grid-cols-3 gap-2 sm:mt-6 sm:gap-3">
               {activeSlide.stats.map((item) => (
                 <QuickStat key={item.id} label={item.label} value={item.value} surface={theme.surface} />
               ))}
@@ -422,7 +422,7 @@ function HeroSlider({ section, theme, preview }) {
           )}
         </div>
 
-        <div className="relative min-h-[260px] overflow-hidden sm:min-h-[360px]">
+        <div className="relative order-1 min-h-[210px] overflow-hidden sm:min-h-[360px] lg:order-2">
           {slides.map((slide, index) => (
             <img
               key={slide.id || index}
@@ -433,11 +433,11 @@ function HeroSlider({ section, theme, preview }) {
           ))}
           <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${theme.primary}99, ${theme.secondary}66)` }} />
           {slides.length > 1 && (
-            <div className="absolute bottom-4 left-4 flex gap-2">
-              <button type="button" aria-label="العرض السابق" onClick={() => goTo(activeIndex - 1)} className="grid h-10 w-10 place-items-center rounded-full bg-white/90 text-slate-900 shadow-lg backdrop-blur">
+            <div className="absolute bottom-3 left-3 flex gap-2 sm:bottom-4 sm:left-4">
+              <button type="button" aria-label="العرض السابق" onClick={() => goTo(activeIndex - 1)} className="grid h-9 w-9 place-items-center rounded-full bg-white/90 text-slate-900 shadow-lg backdrop-blur sm:h-10 sm:w-10">
                 <ChevronRight size={18} />
               </button>
-              <button type="button" aria-label="العرض التالي" onClick={() => goTo(activeIndex + 1)} className="grid h-10 w-10 place-items-center rounded-full bg-white/90 text-slate-900 shadow-lg backdrop-blur">
+              <button type="button" aria-label="العرض التالي" onClick={() => goTo(activeIndex + 1)} className="grid h-9 w-9 place-items-center rounded-full bg-white/90 text-slate-900 shadow-lg backdrop-blur sm:h-10 sm:w-10">
                 <ChevronLeft size={18} />
               </button>
             </div>
@@ -467,12 +467,12 @@ function OfferSlider({ section, theme, preview }) {
     <section className="space-y-4">
       <SectionHeading title={section.title} subtitle={section.subtitle} theme={theme} />
       <article className="overflow-hidden rounded-2xl border" style={{ background: theme.surface, borderColor: "#e2e8f0" }}>
-        <div className="grid gap-0 md:grid-cols-[1fr_360px]">
-          <div className="flex min-h-[250px] flex-col justify-center p-5 sm:p-7">
+        <div className="grid gap-0 sm:grid-cols-[1fr_220px] lg:grid-cols-[1fr_360px]">
+          <div className="flex min-h-[190px] flex-col justify-center p-4 sm:min-h-[250px] sm:p-7">
             <Badge tone="accent" className="w-fit">{activeItem.badge || "عرض الشريك"}</Badge>
-            <h3 className="mt-4 font-heading text-2xl font-black sm:text-3xl" style={{ color: theme.text }}>{activeItem.title}</h3>
-            <p className="mt-3 max-w-2xl text-sm leading-6" style={{ color: theme.mutedText }}>{activeItem.subtitle}</p>
-            <div className="mt-5 flex flex-wrap items-center gap-3">
+            <h3 className="mt-3 font-heading text-xl font-black sm:mt-4 sm:text-3xl" style={{ color: theme.text }}>{activeItem.title}</h3>
+            <p className="mt-2 max-w-2xl text-xs leading-5 sm:mt-3 sm:text-sm sm:leading-6" style={{ color: theme.mutedText }}>{activeItem.subtitle}</p>
+            <div className="mt-4 flex flex-wrap items-center gap-3 sm:mt-5">
               <ActionButton preview={preview} target={activeItem.ctaTarget} primary theme={theme}>
                 {activeItem.ctaLabel}
               </ActionButton>
@@ -492,7 +492,7 @@ function OfferSlider({ section, theme, preview }) {
               )}
             </div>
           </div>
-          <div className="relative min-h-[240px] overflow-hidden">
+          <div className="relative min-h-[170px] overflow-hidden sm:min-h-[240px]">
             {items.map((item, index) => (
               <img
                 key={item.id || index}
@@ -551,8 +551,8 @@ function SectionShell({ section, preview, children, onAction, index }) {
 function SectionHeading({ title, subtitle, theme }) {
   return (
     <div>
-      <h2 className="font-heading text-2xl font-black" style={{ color: theme.text }}>{title}</h2>
-      {subtitle ? <p className="text-sm" style={{ color: theme.mutedText }}>{subtitle}</p> : null}
+      <h2 className="font-heading text-xl font-black sm:text-2xl" style={{ color: theme.text }}>{title}</h2>
+      {subtitle ? <p className="text-xs leading-5 sm:text-sm" style={{ color: theme.mutedText }}>{subtitle}</p> : null}
     </div>
   );
 }
@@ -561,17 +561,17 @@ function ProductCard({ product, theme, preview, addItem, compact = false }) {
   const content = (
     <article className="group overflow-hidden rounded-2xl border transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-200/70" style={{ background: theme.surface, borderColor: "#e2e8f0" }}>
       <div className="relative block">
-        <img src={product.image} alt={product.name} className={`w-full object-cover transition duration-500 group-hover:scale-[1.03] ${compact ? "h-32 sm:h-48" : "h-52"}`} />
+        <img src={product.image} alt={product.name} className={`w-full object-cover transition duration-500 group-hover:scale-[1.03] ${compact ? "h-28 sm:h-48" : "h-40 sm:h-52"}`} />
         <Badge tone={statusTone(stockState(product))} className="absolute right-3 top-3">{statusLabel(stockState(product))}</Badge>
       </div>
       <div className="p-3 sm:p-4">
-        <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{categoryLabel(product.category)}</p>
-        <div className={`mt-1 block rounded-xl font-heading font-black leading-5 ${compact ? "min-h-[48px] text-sm sm:min-h-[56px] sm:text-lg" : "text-lg sm:text-xl"}`} style={{ color: theme.text }}>
+        <p className="truncate text-[11px] font-bold uppercase tracking-wide text-slate-400 sm:text-xs">{categoryLabel(product.category)}</p>
+        <div className={`mt-1 block rounded-xl font-heading font-black leading-5 ${compact ? "min-h-[42px] text-sm sm:min-h-[56px] sm:text-lg" : "text-base sm:text-xl"}`} style={{ color: theme.text }}>
           {product.name}
         </div>
         <div className="mt-2 flex items-center justify-between sm:mt-3">
           <Rating value={product.rating} compact />
-          <p className="font-heading text-sm font-black sm:text-lg" style={{ color: theme.text }}>{money(product.price)}</p>
+          <p className="font-heading text-xs font-black sm:text-lg" style={{ color: theme.text }}>{money(product.price)}</p>
         </div>
         <button
           type="button"
@@ -593,8 +593,8 @@ function ProductCard({ product, theme, preview, addItem, compact = false }) {
 
 function ActionButton({ preview, target, primary = false, secondary = false, theme, children }) {
   const className = primary
-    ? "inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-black text-white shadow-lg"
-    : "inline-flex items-center gap-2 rounded-2xl border px-5 py-3 text-sm font-black";
+    ? "inline-flex min-w-0 items-center justify-center gap-2 rounded-xl px-3 py-3 text-center text-xs font-black text-white shadow-lg sm:rounded-2xl sm:px-5 sm:text-sm"
+    : "inline-flex min-w-0 items-center justify-center gap-2 rounded-xl border px-3 py-3 text-center text-xs font-black sm:rounded-2xl sm:px-5 sm:text-sm";
   const style = primary
     ? { background: theme.primary }
     : secondary
@@ -614,9 +614,9 @@ function ActionButton({ preview, target, primary = false, secondary = false, the
 
 function QuickStat({ label, value, surface }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white/70 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/40" style={{ background: surface }}>
-      <p className="text-xs font-bold text-slate-500">{label}</p>
-      <p className="mt-1 font-heading text-lg font-black text-slate-950 dark:text-white">{value}</p>
+    <div className="min-w-0 rounded-xl border border-slate-200 bg-white/70 px-2 py-2 dark:border-slate-800 dark:bg-slate-900/40 sm:rounded-2xl sm:px-4 sm:py-3" style={{ background: surface }}>
+      <p className="truncate text-[10px] font-bold text-slate-500 sm:text-xs">{label}</p>
+      <p className="mt-1 truncate font-heading text-sm font-black text-slate-950 sm:text-lg dark:text-white">{value}</p>
     </div>
   );
 }
