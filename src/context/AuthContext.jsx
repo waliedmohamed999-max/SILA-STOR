@@ -4,14 +4,14 @@ const AuthContext = createContext(null);
 const usersKey = "sila-auth-users";
 const sessionKey = "sila-auth-session";
 
-const authMode = import.meta.env.VITE_AUTH_MODE || (import.meta.env.DEV ? "local" : "api");
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
-const demoAuthEnabled = import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEMO_AUTH !== "false";
-const publicRegistrationEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_PUBLIC_REGISTRATION === "true";
+const authMode = import.meta.env.VITE_AUTH_MODE || (apiBaseUrl ? "api" : "local");
+const demoAuthEnabled = authMode === "local" && import.meta.env.VITE_ENABLE_DEMO_AUTH !== "false";
+const publicRegistrationEnabled = authMode === "local" || import.meta.env.VITE_ENABLE_PUBLIC_REGISTRATION === "true";
 const sessionMinutes = Number(import.meta.env.VITE_AUTH_SESSION_MINUTES || 60);
 const sessionTtlMs = Math.max(5, sessionMinutes) * 60 * 1000;
-const demoAdminEmail = import.meta.env.VITE_DEMO_ADMIN_EMAIL || "";
-const demoAdminPassword = import.meta.env.VITE_DEMO_ADMIN_PASSWORD || "";
+const demoAdminEmail = import.meta.env.VITE_DEMO_ADMIN_EMAIL || "admin@sila.local";
+const demoAdminPassword = import.meta.env.VITE_DEMO_ADMIN_PASSWORD || "Sila@12345";
 const demoCredentialsAvailable = Boolean(demoAdminEmail && demoAdminPassword);
 const isApiAuth = authMode === "api";
 
