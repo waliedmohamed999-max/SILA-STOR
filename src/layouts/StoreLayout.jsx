@@ -124,7 +124,7 @@ export default function StoreLayout() {
         })}
       </nav>
 
-      <footer className="mt-10 hidden border-t border-slate-200/80 bg-white/70 dark:border-slate-800 dark:bg-slate-950/70 md:block">
+      <footer className="mt-10 border-t border-slate-200/80 bg-white/70 pb-24 dark:border-slate-800 dark:bg-slate-950/70 md:pb-0">
         <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 md:grid-cols-[1.2fr_1fr_1fr]">
           <div>
             <div className="flex items-center gap-3">
