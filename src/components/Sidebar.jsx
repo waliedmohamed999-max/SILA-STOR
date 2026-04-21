@@ -2,6 +2,7 @@ import {
   Boxes,
   ExternalLink,
   LayoutDashboard,
+  MessageSquareText,
   Megaphone,
   Package,
   Settings,
@@ -24,6 +25,7 @@ const navItems = [
   { to: "/admin/customers", label: "العملاء", icon: Users },
   { to: "/admin/inventory", label: "المخزون", icon: Boxes },
   { to: "/admin/marketing", label: "التسويق", icon: Megaphone },
+  { to: "/admin/live-chat", label: "الدعم المباشر", icon: MessageSquareText },
   { to: "/admin/storefront", label: "واجهة المتجر", icon: ShoppingBag },
   { to: "/admin/settings", label: "الإعدادات", icon: Settings },
 ];

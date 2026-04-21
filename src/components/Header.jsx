@@ -12,6 +12,7 @@ const titles = {
   "/admin/customers": "العملاء",
   "/admin/inventory": "المخزون",
   "/admin/marketing": "التسويق",
+  "/admin/live-chat": "الدعم المباشر",
   "/admin/storefront": "واجهة المتجر",
 };
 
