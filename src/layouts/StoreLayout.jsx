@@ -1,10 +1,12 @@
-import { CreditCard, LayoutDashboard, Monitor, Moon, ShoppingCart, Store, Sun } from "lucide-react";
+import { LayoutDashboard, MessageCircle, Monitor, Moon, ShoppingCart, Store, Sun } from "lucide-react";
 import { useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import Button from "../components/Button";
 import CartDrawer from "../components/CartDrawer";
 import Dropdown from "../components/Dropdown";
 import { useCart } from "../context/CartContext";
+import { useLiveChat } from "../context/LiveChatContext";
+import { usePayments } from "../context/PaymentContext";
 import { useStorefrontThemes } from "../context/StorefrontThemeContext";
 import { useTheme } from "../context/ThemeContext";
 
@@ -18,15 +20,22 @@ const links = [
 const mobileLinks = [
   { to: "/", label: "المتجر", icon: Store, end: true },
   { to: "/cart", label: "السلة", icon: ShoppingCart },
-  { to: "/checkout", label: "الدفع", icon: CreditCard },
   { to: "/admin", label: "التحكم", icon: LayoutDashboard },
 ];
 
 export default function StoreLayout() {
   const [cartOpen, setCartOpen] = useState(false);
   const { count } = useCart();
+  const { activeConversation, startConversation, setWidgetOpen, setMinimized, unreadCount, widgetOpen } = useLiveChat();
+  const { activeCountry, activeCurrency, enabledCountries, setCountry } = usePayments();
   const { theme, setTheme } = useTheme();
   const { activeTheme } = useStorefrontThemes();
+
+  const openMessages = () => {
+    if (!activeConversation) startConversation();
+    setMinimized(false);
+    setWidgetOpen(true);
+  };
 
   return (
     <div className="min-h-screen" style={{ background: activeTheme.background, color: activeTheme.text, fontFamily: activeTheme.font }}>
@@ -82,6 +91,19 @@ export default function StoreLayout() {
             ))}
           </Dropdown>
 
+          <select
+            aria-label="اختيار الدولة"
+            value={activeCountry?.code}
+            onChange={(event) => setCountry(event.target.value)}
+            className="hidden h-10 shrink-0 rounded-2xl border border-slate-200 bg-white px-3 text-xs font-black text-slate-700 outline-none sm:block dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200"
+          >
+            {enabledCountries.map((country) => (
+              <option key={country.code} value={country.code}>
+                {country.name} · {country.currency}
+              </option>
+            ))}
+          </select>
+
           <button aria-label="فتح السلة" onClick={() => setCartOpen(true)} className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-white shadow-lg transition sm:h-10 sm:w-10" style={{ background: activeTheme.primary, boxShadow: `0 18px 40px -20px ${activeTheme.primary}` }}>
             <ShoppingCart size={18} />
             {count > 0 && <span className="absolute -left-2 -top-2 grid h-5 min-w-5 place-items-center rounded-full bg-danger px-1 text-xs font-black text-white">{count}</span>}
@@ -90,13 +112,28 @@ export default function StoreLayout() {
       </header>
 
       <main className="mx-auto max-w-7xl px-3 py-5 pb-24 sm:px-6 md:pb-5 lg:py-8">
-        <div className="animate-[fadeIn_.2s_ease-out]">
+        <div className="mb-4 flex items-center justify-between rounded-2xl border border-slate-200 bg-white/80 px-3 py-2 text-xs font-black text-slate-600 shadow-sm sm:hidden dark:border-slate-800 dark:bg-slate-950/80 dark:text-slate-300">
+          <span>{activeCountry?.name}</span>
+          <select
+            aria-label="اختيار الدولة"
+            value={activeCountry?.code}
+            onChange={(event) => setCountry(event.target.value)}
+            className="rounded-xl border border-slate-200 bg-white px-2 py-1 text-xs font-black outline-none dark:border-slate-800 dark:bg-slate-950"
+          >
+            {enabledCountries.map((country) => (
+              <option key={country.code} value={country.code}>
+                {country.name} · {country.currency}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div key={activeCountry?.code} className="animate-[fadeIn_.2s_ease-out]">
           <Outlet />
         </div>
       </main>
 
       <nav className="fixed inset-x-3 bottom-3 z-40 grid grid-cols-4 rounded-3xl border border-slate-200 bg-white/95 p-2 shadow-2xl shadow-slate-900/15 backdrop-blur-xl md:hidden dark:border-slate-800 dark:bg-slate-950/95">
-        {mobileLinks.map((link) => {
+        {mobileLinks.slice(0, 2).map((link) => {
           const Icon = link.icon;
           return (
             <NavLink
@@ -117,6 +154,45 @@ export default function StoreLayout() {
                     {count}
                   </span>
                 ) : null}
+              </span>
+              <span className="truncate">{link.label}</span>
+            </NavLink>
+          );
+        })}
+        <button
+          type="button"
+          onClick={openMessages}
+          className={`relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[11px] font-black transition ${
+            widgetOpen ? "text-white" : "text-slate-500 dark:text-slate-300"
+          }`}
+          style={widgetOpen ? { background: activeTheme.primary } : undefined}
+        >
+          <span className="relative">
+            <MessageCircle size={18} />
+            {unreadCount > 0 ? (
+              <span className="absolute -left-2 -top-2 grid h-4 min-w-4 place-items-center rounded-full bg-danger px-1 text-[10px] text-white">
+                {unreadCount}
+              </span>
+            ) : null}
+          </span>
+          <span className="truncate">الرسائل</span>
+        </button>
+        {mobileLinks.slice(2).map((link) => {
+          const Icon = link.icon;
+          return (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              end={link.end}
+              className={({ isActive }) =>
+                `relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[11px] font-black transition ${
+                  isActive ? "text-white" : "text-slate-500 dark:text-slate-300"
+                }`
+              }
+              style={({ isActive }) => (isActive ? { background: activeTheme.primary } : undefined)}
+            >
+              <span className="relative">
+                <Icon size={18} />
               </span>
               <span className="truncate">{link.label}</span>
             </NavLink>
@@ -148,6 +224,7 @@ export default function StoreLayout() {
             <div className="mt-3 grid gap-2 text-sm font-bold text-slate-500">
               <span>{activeTheme.name}</span>
               <span>{activeTheme.layout}</span>
+              <span>{activeCountry?.name} · {activeCurrency?.code}</span>
               <span>{activeTheme.updatedAt}</span>
             </div>
           </div>

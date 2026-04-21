@@ -1,5 +1,6 @@
 import {
   Boxes,
+  CreditCard,
   ExternalLink,
   LayoutDashboard,
   MessageSquareText,
@@ -25,6 +26,7 @@ const navItems = [
   { to: "/admin/customers", label: "العملاء", icon: Users },
   { to: "/admin/inventory", label: "المخزون", icon: Boxes },
   { to: "/admin/marketing", label: "التسويق", icon: Megaphone },
+  { to: "/admin/payments", label: "الدفع والعملات", icon: CreditCard },
   { to: "/admin/live-chat", label: "الدعم المباشر", icon: MessageSquareText },
   { to: "/admin/storefront", label: "واجهة المتجر", icon: ShoppingBag },
   { to: "/admin/settings", label: "الإعدادات", icon: Settings },

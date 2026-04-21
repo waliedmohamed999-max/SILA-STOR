@@ -3,6 +3,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { CartProvider } from "./context/CartContext";
 import { AuthProvider } from "./context/AuthContext";
 import { LiveChatProvider } from "./context/LiveChatContext";
+import { PaymentProvider } from "./context/PaymentContext";
 import { SettingsProvider } from "./context/SettingsContext";
 import { StorefrontThemeProvider } from "./context/StorefrontThemeContext";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -22,6 +23,7 @@ import LiveChatAdmin from "./pages/LiveChatAdmin";
 import Marketing from "./pages/Marketing";
 import NotFound from "./pages/NotFound";
 import Orders from "./pages/Orders";
+import PaymentsAdmin from "./pages/PaymentsAdmin";
 import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
 import Settings from "./pages/Settings";
@@ -36,8 +38,9 @@ export default function App() {
         <SettingsProvider>
           <StorefrontThemeProvider>
             <AuthProvider>
-              <CartProvider>
-                <LiveChatProvider>
+              <PaymentProvider>
+                <CartProvider>
+                  <LiveChatProvider>
                   <Routes>
                     <Route path="login" element={<Login />} />
                     <Route path="register" element={<Register />} />
@@ -59,6 +62,7 @@ export default function App() {
                         <Route path="customers" element={<Customers />} />
                         <Route path="inventory" element={<Inventory />} />
                         <Route path="marketing" element={<Marketing />} />
+                        <Route path="payments" element={<PaymentsAdmin />} />
                         <Route path="live-chat" element={<LiveChatAdmin />} />
                         <Route path="storefront" element={<StorefrontManager />} />
                         <Route path="settings" element={<Settings />} />
@@ -72,8 +76,9 @@ export default function App() {
                     </Route>
                   </Routes>
                   <ChatWidget />
-                </LiveChatProvider>
-              </CartProvider>
+                  </LiveChatProvider>
+                </CartProvider>
+              </PaymentProvider>
             </AuthProvider>
           </StorefrontThemeProvider>
         </SettingsProvider>

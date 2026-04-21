@@ -1,34 +1,21 @@
 import { CheckCircle2, CreditCard, MapPin, ShieldCheck, ShoppingBag, Truck } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import Badge from "../components/Badge";
 import Button from "../components/Button";
 import EmptyState from "../components/EmptyState";
 import { useCart } from "../context/CartContext";
+import { usePayments } from "../context/PaymentContext";
 import { useSettings } from "../context/SettingsContext";
-import { money } from "../utils/formatters";
+import { paymentStatuses } from "../data/paymentConfig";
 import { categoryLabel } from "../utils/labels";
 
-const paymentMethods = [
-  {
-    value: "card",
-    label: "بطاقة مدى / فيزا / ماستركارد",
-    note: "دفع آمن ومباشر عبر بوابة سيلا.",
-  },
-  {
-    value: "cash",
-    label: "الدفع عند الاستلام",
-    note: "متاح للمدن المدعومة على الطلبات المؤهلة.",
-  },
-  {
-    value: "bank",
-    label: "تحويل بنكي",
-    note: "يتم تجهيز الطلب بعد تأكيد التحويل.",
-  },
-];
+const steps = ["العميل", "الشحن", "الدفع", "المراجعة"];
 
 export default function Checkout() {
   const [code, setCode] = useState("");
   const [createdOrder, setCreatedOrder] = useState(null);
+  const [processing, setProcessing] = useState(false);
   const {
     items,
     subtotal,
@@ -42,10 +29,13 @@ export default function Checkout() {
     createOrder,
   } = useCart();
   const { settings } = useSettings();
+  const { activeCountry, activeCurrency, enabledCountries, setCountry, gatewaysForCountry, createPayment, money } = usePayments();
+
+  const availableGateways = useMemo(() => gatewaysForCountry(activeCountry?.code, total), [activeCountry?.code, gatewaysForCountry, total]);
 
   const shippingMethods = useMemo(() => {
-    const shipping = settings.shipping;
-    const services = (shipping.providers || [])
+    const providers = settings.shipping?.providers || [];
+    const configured = providers
       .filter((provider) => provider.enabled && provider.status === "connected")
       .flatMap((provider) =>
         (provider.services || [])
@@ -55,65 +45,86 @@ export default function Checkout() {
             label: service.label,
             note: `${provider.name} · ${service.eta}`,
             extra: Number(service.fee || 0),
-          }))
+          })),
       );
 
-    const unique = services.filter((service, index, array) => array.findIndex((item) => item.value === service.value) === index);
+    return [
+      {
+        value: `market_${activeCountry?.code || "SA"}`,
+        label: `شحن ${activeCountry?.name || "محلي"}`,
+        note: `خدمة مرتبطة بسوق ${activeCountry?.name || "المتجر"}`,
+        extra: Number(activeCountry?.shippingFee || 0),
+      },
+      ...configured,
+      { value: "pickup", label: "الاستلام من الفرع", note: "استلام بدون رسوم بعد تأكيد الجاهزية", extra: 0 },
+    ];
+  }, [activeCountry, settings.shipping]);
 
-    if (shipping.pickupEnabled) {
-      unique.push({
-        value: "pickup",
-        label: "الاستلام من الفرع",
-        note: `استلام من ${shipping.warehouseCity} بدون رسوم شحن بعد تأكيد الجاهزية.`,
-        extra: 0,
-      });
+  const taxableTotal = Math.max(0, subtotal - discountAmount);
+  const taxAmount = taxableTotal * (Number(activeCountry?.taxRate || 0) / 100);
+  const grandTotal = total + taxAmount;
+
+  useEffect(() => {
+    if (availableGateways.length && !availableGateways.some((gateway) => gateway.id === checkoutForm.paymentMethod)) {
+      updateCheckoutField("paymentMethod", availableGateways[0].id);
     }
+  }, [availableGateways, checkoutForm.paymentMethod, updateCheckoutField]);
 
-    return unique;
-  }, [settings.shipping]);
+  useEffect(() => {
+    const marketShipping = `market_${activeCountry?.code || "SA"}`;
+    if (!checkoutForm.shippingMethod || checkoutForm.shippingMethod === "standard") {
+      updateCheckoutField("shippingMethod", marketShipping);
+    }
+  }, [activeCountry?.code, checkoutForm.shippingMethod, updateCheckoutField]);
 
-  const customerName = useMemo(
-    () => `${checkoutForm.firstName} ${checkoutForm.lastName}`.trim(),
-    [checkoutForm.firstName, checkoutForm.lastName]
-  );
-
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    const order = createOrder();
-    if (order) {
-      setCreatedOrder(order);
+    if (processing) return;
+    setProcessing(true);
+    try {
+      const order = createOrder();
+      if (!order) return;
+      const enrichedOrder = {
+        ...order,
+        country: activeCountry.code,
+        currency: activeCurrency.code,
+        taxAmount,
+        total: grandTotal,
+      };
+      const transaction = await createPayment({ order: enrichedOrder, gatewayId: checkoutForm.paymentMethod });
+      setCreatedOrder({ ...enrichedOrder, transaction });
+    } finally {
+      setProcessing(false);
     }
   };
 
   if (!items.length && createdOrder) {
+    const status = paymentStatuses[createdOrder.transaction?.status] || paymentStatuses.pending;
     return (
       <section className="mx-auto max-w-3xl space-y-6">
-        <div className="card p-8 text-center">
+        <div className="card p-6 text-center sm:p-8">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300">
             <CheckCircle2 size={30} />
           </div>
-          <h1 className="mt-5 font-heading text-3xl font-black text-slate-950 dark:text-white">تم استلام طلبك بنجاح</h1>
+          <h1 className="mt-5 font-heading text-3xl font-black text-slate-950 dark:text-white">تم إنشاء الطلب</h1>
           <p className="mt-3 text-sm leading-7 text-slate-500 dark:text-slate-400">
-            رقم الطلب <span className="font-black text-slate-900 dark:text-white">{createdOrder.id}</span> وتم تسجيله في النظام.
-            سيتم إرسال التحديثات إلى {createdOrder.customer.email}.
+            رقم الطلب <span className="font-black text-slate-900 dark:text-white">{createdOrder.id}</span> وتم تسجيل عملية الدفع
+            <span className="font-black text-slate-900 dark:text-white"> {createdOrder.transaction?.reference}</span>.
           </p>
           <div className="mt-6 grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 text-right dark:border-slate-800 dark:bg-slate-900/60 sm:grid-cols-3">
-            <SummaryMetric label="إجمالي الطلب" value={money(createdOrder.total)} />
-            <SummaryMetric
-              label="طريقة الدفع"
-              value={paymentMethods.find((item) => item.value === createdOrder.paymentMethod)?.label || createdOrder.paymentMethod}
-            />
-            <SummaryMetric
-              label="طريقة الشحن"
-              value={shippingMethods.find((item) => item.value === createdOrder.shippingMethod)?.label || createdOrder.shippingMethod}
-            />
+            <SummaryMetric label="الإجمالي" value={money(createdOrder.total, createdOrder.country)} />
+            <SummaryMetric label="الدولة / العملة" value={`${activeCountry.name} · ${createdOrder.currency}`} />
+            <div>
+              <p className="text-xs font-bold text-slate-500">حالة الدفع</p>
+              <div className="mt-2"><Badge tone={status.tone}>{status.label}</Badge></div>
+            </div>
           </div>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link to="/">
               <Button><ShoppingBag size={17} />العودة إلى المتجر</Button>
             </Link>
-            <Link to={`/products/${createdOrder.items[0]?.id || 1}`}>
-              <Button variant="secondary">متابعة التصفح</Button>
+            <Link to="/admin/payments">
+              <Button variant="secondary">عرض العمليات</Button>
             </Link>
           </div>
         </div>
@@ -125,12 +136,8 @@ export default function Checkout() {
     return (
       <EmptyState
         title="لا توجد عملية دفع نشطة"
-        text="أضف منتجات إلى السلة أولاً ثم عد إلى صفحة الدفع لاستكمال بيانات الشحن والدفع."
-        action={
-          <Link to="/">
-            <Button><ShoppingBag size={17} />العودة إلى المتجر</Button>
-          </Link>
-        }
+        text="أضف منتجات إلى السلة أولا ثم عد إلى صفحة الدفع لاستكمال بيانات الشحن والدفع."
+        action={<Link to="/"><Button><ShoppingBag size={17} />العودة إلى المتجر</Button></Link>}
       />
     );
   }
@@ -142,27 +149,30 @@ export default function Checkout() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h1 className="font-heading text-2xl font-black text-slate-950 dark:text-white">إتمام الطلب</h1>
-              <p className="mt-1 text-sm text-slate-500">أدخل بيانات العميل والشحن والدفع لإرسال الطلب مباشرة إلى نظام سيلا.</p>
+              <p className="mt-1 text-sm text-slate-500">Checkout متعدد الدول والعملات وجاهز للربط مع بوابات الدفع.</p>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm dark:border-slate-800 dark:bg-slate-900/60">
-              <p className="font-black text-slate-950 dark:text-white">تجهيز سريع</p>
-              <p className="mt-1 text-slate-500">تأكيد تلقائي وربط مباشر بالسلة الحالية.</p>
+            <div className="grid grid-cols-4 gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-2 dark:border-slate-800 dark:bg-slate-900/60">
+              {steps.map((step, index) => (
+                <span key={step} className="rounded-xl bg-white px-2 py-2 text-center text-[11px] font-black text-slate-600 dark:bg-slate-950 dark:text-slate-300">
+                  {index + 1}. {step}
+                </span>
+              ))}
             </div>
           </div>
         </div>
 
-        <div className="card p-4 sm:p-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent/10 text-accent">
-              <MapPin size={20} />
-            </div>
-            <div>
-              <h2 className="font-heading text-xl font-black text-slate-950 dark:text-white">بيانات العميل والشحن</h2>
-              <p className="text-sm text-slate-500">هذه البيانات ستستخدم في الفاتورة وإشعارات الطلب والتسليم.</p>
-            </div>
-          </div>
-
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
+        <Panel icon={MapPin} title="بيانات العميل والدولة" description="اختيار الدولة يغير العملة والضرائب وطرق الدفع المتاحة.">
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="md:col-span-2">
+              <span className="mb-2 block text-sm font-black text-slate-700 dark:text-slate-200">الدولة والعملة</span>
+              <select value={activeCountry?.code} onChange={(event) => setCountry(event.target.value)} className="input-like">
+                {enabledCountries.map((country) => (
+                  <option key={country.code} value={country.code}>
+                    {country.name} · {country.currency}
+                  </option>
+                ))}
+              </select>
+            </label>
             <Field label="الاسم الأول" value={checkoutForm.firstName} onChange={(value) => updateCheckoutField("firstName", value)} required />
             <Field label="اسم العائلة" value={checkoutForm.lastName} onChange={(value) => updateCheckoutField("lastName", value)} required />
             <Field label="البريد الإلكتروني" type="email" value={checkoutForm.email} onChange={(value) => updateCheckoutField("email", value)} required />
@@ -170,31 +180,11 @@ export default function Checkout() {
             <Field label="المدينة" value={checkoutForm.city} onChange={(value) => updateCheckoutField("city", value)} required />
             <Field label="الحي / المنطقة" value={checkoutForm.area} onChange={(value) => updateCheckoutField("area", value)} />
             <Field className="md:col-span-2" label="العنوان التفصيلي" value={checkoutForm.address} onChange={(value) => updateCheckoutField("address", value)} required />
-            <Field label="الرمز البريدي" value={checkoutForm.postalCode} onChange={(value) => updateCheckoutField("postalCode", value)} />
-            <label className="flex items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3 text-sm font-bold text-slate-600 dark:border-slate-800 dark:text-slate-300">
-              <input
-                type="checkbox"
-                checked={checkoutForm.saveInfo}
-                onChange={(event) => updateCheckoutField("saveInfo", event.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 text-accent focus:ring-accent"
-              />
-              حفظ البيانات لاستخدامها في الطلبات القادمة
-            </label>
           </div>
-        </div>
+        </Panel>
 
-        <div className="card p-4 sm:p-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500">
-              <Truck size={20} />
-            </div>
-            <div>
-              <h2 className="font-heading text-xl font-black text-slate-950 dark:text-white">خيارات الشحن</h2>
-              <p className="text-sm text-slate-500">تم سحب هذه الخدمات من مزودات الشحن المفعلة داخل إعدادات سيلا.</p>
-            </div>
-          </div>
-
-          <div className="mt-6 grid gap-4">
+        <Panel icon={Truck} title="وسيلة الشحن" description="رسوم الشحن تتغير حسب الدولة وإعدادات مزودي الشحن.">
+          <div className="grid gap-3">
             {shippingMethods.map((option) => (
               <ChoiceCard
                 key={option.value}
@@ -206,36 +196,31 @@ export default function Checkout() {
               />
             ))}
           </div>
-        </div>
+        </Panel>
 
-        <div className="card p-4 sm:p-6">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500">
-              <CreditCard size={20} />
-            </div>
-            <div>
-              <h2 className="font-heading text-xl font-black text-slate-950 dark:text-white">طريقة الدفع</h2>
-              <p className="text-sm text-slate-500">اختر قناة الدفع التي سيتم بها تأكيد الطلب.</p>
-            </div>
-          </div>
-
-          <div className="mt-6 grid gap-4">
-            {paymentMethods.map((option) => (
+        <Panel icon={CreditCard} title="وسيلة الدفع" description="تظهر البوابات المتاحة فقط للدولة والعملة وإجمالي الطلب.">
+          <div className="grid gap-3">
+            {availableGateways.map((gateway) => (
               <ChoiceCard
-                key={option.value}
-                active={checkoutForm.paymentMethod === option.value}
-                label={option.label}
-                note={option.note}
-                onClick={() => updateCheckoutField("paymentMethod", option.value)}
+                key={gateway.id}
+                active={checkoutForm.paymentMethod === gateway.id}
+                label={gateway.name}
+                note={`${gateway.environment === "live" ? "Live" : "Sandbox"} · ${gateway.supportedCurrencies.join(", ")} · ${gateway.callbackUrl || "Webhook placeholder"}`}
+                onClick={() => updateCheckoutField("paymentMethod", gateway.id)}
               />
             ))}
+            {!availableGateways.length && (
+              <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-bold text-amber-700">
+                لا توجد بوابة دفع مفعلة لهذه الدولة أو العملة.
+              </div>
+            )}
           </div>
-        </div>
+        </Panel>
       </section>
 
       <aside className="order-1 space-y-4 sm:space-y-6 xl:order-2 xl:sticky xl:top-24 xl:self-start">
         <div className="card p-4 sm:p-5">
-          <h2 className="font-heading text-xl font-black text-slate-950 dark:text-white">ملخص الطلب</h2>
+          <h2 className="font-heading text-xl font-black text-slate-950 dark:text-white">مراجعة الطلب</h2>
           <div className="mt-5 space-y-4">
             {items.map((item) => (
               <div key={item.id} className="flex items-center gap-3">
@@ -250,12 +235,7 @@ export default function Checkout() {
           </div>
 
           <div className="mt-5 grid gap-2 min-[420px]:flex">
-            <input
-              value={code}
-              onChange={(event) => setCode(event.target.value)}
-              placeholder="كود الخصم"
-              className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-accent dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-            />
+            <input value={code} onChange={(event) => setCode(event.target.value)} placeholder="كود الخصم" className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-accent dark:border-slate-800 dark:bg-slate-950 dark:text-white" />
             <Button type="button" variant="secondary" onClick={() => applyDiscount(code)}>تطبيق</Button>
           </div>
 
@@ -263,17 +243,17 @@ export default function Checkout() {
             <PriceRow label="الإجمالي الفرعي" value={money(subtotal)} />
             <PriceRow label={`الخصم${discount.code ? ` (${discount.code})` : ""}`} value={`-${money(discountAmount)}`} />
             <PriceRow label="الشحن" value={shippingCost === 0 ? "مجاني" : money(shippingCost)} />
+            <PriceRow label={`الضريبة (${activeCountry?.taxRate || 0}%)`} value={money(taxAmount)} />
+            <PriceRow label="الدولة / العملة" value={`${activeCountry?.name} · ${activeCurrency?.code}`} />
             <div className="border-t border-slate-200 pt-3 dark:border-slate-800">
-              <PriceRow label="الإجمالي النهائي" value={money(total)} large />
+              <PriceRow label="الإجمالي النهائي" value={money(grandTotal)} large />
             </div>
           </div>
 
-          <div className="mt-5 space-y-3">
-            <Button type="submit" className="w-full"><ShieldCheck size={18} />تأكيد الطلب وإرساله</Button>
-            <Link to="/cart" className="block">
-              <Button type="button" variant="secondary" className="w-full">العودة إلى السلة</Button>
-            </Link>
-          </div>
+          <Button type="submit" className="mt-5 w-full" disabled={processing || !availableGateways.length}>
+            <ShieldCheck size={18} />
+            {processing ? "جاري إنشاء الدفع..." : "تأكيد الطلب والدفع"}
+          </Button>
         </div>
 
         <div className="card p-4 sm:p-5">
@@ -281,16 +261,29 @@ export default function Checkout() {
           <div className="mt-4 space-y-4">
             <StatusLine label="بيانات العميل" done={Boolean(checkoutForm.firstName && checkoutForm.lastName && checkoutForm.email && checkoutForm.phone)} />
             <StatusLine label="عنوان الشحن" done={Boolean(checkoutForm.city && checkoutForm.address)} />
-            <StatusLine label="طريقة الشحن" done={Boolean(checkoutForm.shippingMethod)} />
-            <StatusLine label="طريقة الدفع" done={Boolean(checkoutForm.paymentMethod)} />
-          </div>
-          <div className="mt-5 rounded-2xl bg-slate-50 p-4 text-sm text-slate-500 dark:bg-slate-900/60 dark:text-slate-400">
-            <p className="font-black text-slate-900 dark:text-white">{customerName || "العميل الحالي"}</p>
-            <p className="mt-1">سيتم إنشاء الطلب مباشرة داخل النظام وربطه بالسلة الحالية والبيانات المدخلة.</p>
+            <StatusLine label="الدولة والعملة" done={Boolean(activeCountry?.enabled && activeCurrency?.code)} />
+            <StatusLine label="بوابة الدفع" done={Boolean(checkoutForm.paymentMethod && availableGateways.length)} />
           </div>
         </div>
       </aside>
     </form>
+  );
+}
+
+function Panel({ icon: Icon, title, description, children }) {
+  return (
+    <div className="card p-4 sm:p-6">
+      <div className="mb-5 flex items-center gap-3">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent/10 text-accent">
+          <Icon size={20} />
+        </div>
+        <div>
+          <h2 className="font-heading text-xl font-black text-slate-950 dark:text-white">{title}</h2>
+          <p className="text-sm text-slate-500">{description}</p>
+        </div>
+      </div>
+      {children}
+    </div>
   );
 }
 
@@ -301,13 +294,7 @@ function Field({ label, value, onChange, type = "text", className = "", required
         {label}
         {required ? <span className="mr-1 text-danger">*</span> : null}
       </span>
-      <input
-        type={type}
-        required={required}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-accent dark:border-slate-800 dark:bg-slate-950 dark:text-white"
-      />
+      <input type={type} required={required} value={value} onChange={(event) => onChange(event.target.value)} className="input-like" />
     </label>
   );
 }

@@ -1,20 +1,23 @@
 const settingsStorageKey = "sila-settings";
+const paymentStorageKey = "sila-payment-state";
+const selectedCountryKey = "sila-selected-country";
 
 const currencyConfig = {
-  SAR: { symbol: "ر.س", locale: "en-SA" },
-  EGP: { symbol: "ج.م", locale: "en-EG" },
+  SAR: { symbol: "ر.س", locale: "ar-SA", rate: 1 },
+  EGP: { symbol: "ج.م", locale: "ar-EG", rate: 13.1 },
+  AED: { symbol: "د.إ", locale: "ar-AE", rate: 0.98 },
 };
 
 export const money = (value) => {
-  const amount = Number(value) || 0;
-  const { symbol, locale } = getCurrencyMeta();
+  const { symbol, locale, rate } = getCurrencyMeta();
+  const amount = (Number(value) || 0) * Number(rate || 1);
   const minimumFractionDigits = Number.isInteger(amount) ? 0 : 2;
   return `${amount.toLocaleString(locale, { minimumFractionDigits, maximumFractionDigits: 2 })} ${symbol}`;
 };
 
 export const compactMoney = (value) => {
-  const amount = Number(value) || 0;
-  const { symbol, locale } = getCurrencyMeta();
+  const { symbol, locale, rate } = getCurrencyMeta();
+  const amount = (Number(value) || 0) * Number(rate || 1);
   const formatted = new Intl.NumberFormat(locale, {
     notation: "compact",
     maximumFractionDigits: 1,
@@ -62,10 +65,25 @@ export const sortBy = (items, sort) =>
 
 function getCurrencyMeta() {
   try {
+    const paymentRaw = localStorage.getItem(paymentStorageKey);
+    if (paymentRaw) {
+      const payment = JSON.parse(paymentRaw);
+      const selectedCountry = localStorage.getItem(selectedCountryKey) || payment.settings?.defaultCountry;
+      const country = (payment.settings?.countries || []).find((item) => item.code === selectedCountry && item.enabled);
+      const currency = payment.settings?.currencies?.[country?.currency];
+      if (country && currency) {
+        return {
+          symbol: currency.symbol || currencyConfig[currency.code]?.symbol,
+          locale: currency.locale || country.locale || "ar-SA",
+          rate: Number(currency.manualRate || 1),
+        };
+      }
+    }
+
     const raw = localStorage.getItem(settingsStorageKey);
     const parsed = raw ? JSON.parse(raw) : null;
     const billing = parsed?.billing || {};
-    const code = billing.currency === "EGP" ? "EGP" : "SAR";
+    const code = currencyConfig[billing.currency] ? billing.currency : "SAR";
     return {
       ...currencyConfig[code],
       symbol: billing.currencySymbol || currencyConfig[code].symbol,
