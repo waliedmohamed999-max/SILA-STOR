@@ -41,6 +41,7 @@ export function StorefrontThemeProvider({ children }) {
     setThemes((current) => [nextTheme, ...current]);
     setSelectedId(nextId);
     showToast("تم إنشاء الثيم", `تم إنشاء الثيم ${nextTheme.name}.`, "success");
+    return nextId;
   };
 
   const updateTheme = (themeId, updates) => {
@@ -61,9 +62,9 @@ export function StorefrontThemeProvider({ children }) {
     if (theme.id) {
       updateTheme(theme.id, theme);
       showToast("تم حفظ الثيم", `تم تحديث الثيم ${theme.name}.`, "success");
-      return;
+      return theme.id;
     }
-    createTheme(theme);
+    return createTheme(theme);
   };
 
   const activateTheme = (themeId) => {

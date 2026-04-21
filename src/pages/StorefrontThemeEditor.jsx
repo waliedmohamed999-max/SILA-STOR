@@ -130,7 +130,7 @@ export default function StorefrontThemeEditor() {
   const navigate = useNavigate();
   const importRef = useRef(null);
   const iframeRef = useRef(null);
-  const { themes, saveTheme } = useStorefrontThemes();
+  const { themes, saveTheme, activateTheme } = useStorefrontThemes();
 
   const sourceTheme = useMemo(() => {
     if (themeId === "new") return { ...emptyStorefrontTheme, id: undefined, slug: "custom-theme" };
@@ -230,7 +230,9 @@ export default function StorefrontThemeEditor() {
   };
 
   const save = () => {
-    saveTheme(normalizeStorefrontTheme(form));
+    const prepared = prepareThemeForStorefront(form);
+    const savedId = saveTheme(prepared);
+    if (savedId) activateTheme(savedId);
     navigate("/admin/storefront");
   };
 
@@ -679,6 +681,54 @@ function withBuilderDefaults(theme) {
     },
     pageSections: (theme.pageSections || []).map(withSectionDefaults),
   };
+}
+
+function prepareThemeForStorefront(theme) {
+  const normalized = withBuilderDefaults(normalizeStorefrontTheme(theme));
+  return normalizeStorefrontTheme({
+    ...normalized,
+    pageSections: normalized.pageSections.map((section) => {
+      if (section.type === "hero" && section.slides?.length) {
+        return {
+          ...section,
+          slides: section.slides.map((slide, index) =>
+            index === 0
+              ? {
+                  ...slide,
+                  title: section.title || slide.title,
+                  subtitle: section.subtitle || slide.subtitle,
+                  badge: section.badge || slide.badge,
+                  image: section.image || slide.image,
+                  ctaLabel: section.ctaLabel || slide.ctaLabel || slide.primaryActionLabel,
+                  ctaTarget: section.ctaTarget || slide.ctaTarget || slide.primaryActionTarget,
+                }
+              : slide,
+          ),
+        };
+      }
+
+      if (section.type === "bannerGrid" && section.banners?.length) {
+        return {
+          ...section,
+          banners: section.banners.map((banner, index) =>
+            index === 0
+              ? {
+                  ...banner,
+                  title: section.title || banner.title,
+                  subtitle: section.subtitle || banner.subtitle,
+                  badge: section.badge || banner.badge,
+                  image: section.image || banner.image,
+                  ctaLabel: section.ctaLabel || banner.ctaLabel,
+                  ctaTarget: section.ctaTarget || banner.ctaTarget,
+                }
+              : banner,
+          ),
+        };
+      }
+
+      return section;
+    }),
+  });
 }
 
 function withSectionDefaults(section) {

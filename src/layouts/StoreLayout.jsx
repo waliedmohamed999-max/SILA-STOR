@@ -30,6 +30,7 @@ export default function StoreLayout() {
   const { activeCountry, activeCurrency, enabledCountries, setCountry } = usePayments();
   const { theme, setTheme } = useTheme();
   const { activeTheme } = useStorefrontThemes();
+  const storeVariant = getStoreThemeVariant(activeTheme);
 
   const openMessages = () => {
     if (!activeConversation) startConversation();
@@ -39,10 +40,10 @@ export default function StoreLayout() {
 
   return (
     <div className="min-h-screen" style={{ background: activeTheme.background, color: activeTheme.text, fontFamily: activeTheme.font }}>
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90">
-        <div className="mx-auto flex max-w-7xl items-center gap-2 px-3 py-2 sm:gap-3 sm:px-6 sm:py-3">
-          <Link to="/" className="flex shrink-0 items-center gap-2 rounded-xl sm:gap-3">
-            <span className="grid h-9 w-9 place-items-center rounded-xl text-white shadow-lg sm:h-10 sm:w-10 sm:rounded-2xl" style={{ background: activeTheme.primary, boxShadow: `0 18px 40px -20px ${activeTheme.primary}` }}>
+      <header className={getStoreHeaderClass(storeVariant)}>
+        <div className={getStoreHeaderInnerClass(storeVariant)}>
+          <Link to="/" className={getStoreBrandClass(storeVariant)}>
+            <span className={getStoreLogoClass(storeVariant)} style={getStoreLogoStyle(activeTheme, storeVariant)}>
               <Store size={20} />
             </span>
             <span>
@@ -51,20 +52,14 @@ export default function StoreLayout() {
             </span>
           </Link>
 
-          <nav className="mr-auto flex min-w-0 flex-1 items-center gap-1 overflow-x-auto px-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <nav className={getStoreNavClass(storeVariant)}>
             {links.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
                 end={link.to === "/"}
-                className={({ isActive }) =>
-                  `shrink-0 rounded-xl px-3 py-2 text-xs font-black transition sm:rounded-2xl sm:px-4 sm:text-sm ${
-                    isActive
-                      ? "text-white"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white"
-                  }`
-                }
-                style={({ isActive }) => (isActive ? { background: activeTheme.primary } : undefined)}
+                className={({ isActive }) => getStoreNavItemClass(isActive, storeVariant)}
+                style={({ isActive }) => (isActive ? getStoreActiveNavStyle(activeTheme, storeVariant) : undefined)}
               >
                 {link.label}
               </NavLink>
@@ -234,4 +229,76 @@ export default function StoreLayout() {
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
     </div>
   );
+}
+
+function getStoreThemeVariant(theme) {
+  const slug = `${theme?.slug || ""} ${theme?.name || ""} ${theme?.layout || ""}`.toLowerCase();
+  if (slug.includes("dark") || slug.includes("neo") || slug.includes("radar") || slug.includes("gaming") || slug.includes("creative-tech")) return "tech";
+  if (slug.includes("royale") || slug.includes("luxury") || slug.includes("gold") || slug.includes("elegance")) return "luxury";
+  if (slug.includes("fashion") || slug.includes("stylix") || slug.includes("luna") || slug.includes("style-red")) return "fashion";
+  if (slug.includes("campaign") || slug.includes("rush") || slug.includes("glowy") || slug.includes("kids") || slug.includes("dynamic")) return "dynamic";
+  return "marketplace";
+}
+
+function getStoreHeaderClass(variant) {
+  if (variant === "tech") return "sticky top-0 z-30 border-b border-cyan-300/20 bg-slate-950/90 text-white shadow-[0_18px_60px_rgba(34,211,238,.12)] backdrop-blur-xl";
+  if (variant === "luxury") return "sticky top-0 z-30 border-b border-[#d9c08a]/45 bg-[#fbfaf6]/95 text-slate-950 backdrop-blur-xl";
+  if (variant === "fashion") return "sticky top-0 z-30 border-b border-slate-200 bg-white/95 text-slate-950 backdrop-blur-xl";
+  if (variant === "dynamic") return "sticky top-0 z-30 border-b border-white/40 bg-white/80 shadow-lg shadow-indigo-100/60 backdrop-blur-xl";
+  return "sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/90";
+}
+
+function getStoreHeaderInnerClass(variant) {
+  if (variant === "luxury") return "mx-auto flex max-w-7xl items-center gap-3 px-4 py-4 sm:px-8";
+  if (variant === "fashion") return "mx-auto flex max-w-7xl items-center gap-2 px-4 py-3 sm:gap-5 sm:px-6";
+  return "mx-auto flex max-w-7xl items-center gap-2 px-3 py-2 sm:gap-3 sm:px-6 sm:py-3";
+}
+
+function getStoreBrandClass(variant) {
+  if (variant === "fashion") return "flex shrink-0 items-center gap-3 rounded-none";
+  return "flex shrink-0 items-center gap-2 rounded-xl sm:gap-3";
+}
+
+function getStoreLogoClass(variant) {
+  if (variant === "luxury") return "grid h-11 w-11 place-items-center border border-[#b9974d] text-[#8a6a22]";
+  if (variant === "fashion") return "grid h-9 w-9 place-items-center rounded-full bg-slate-950 text-white";
+  return "grid h-9 w-9 place-items-center rounded-xl text-white shadow-lg sm:h-10 sm:w-10 sm:rounded-2xl";
+}
+
+function getStoreLogoStyle(theme, variant) {
+  if (variant === "luxury" || variant === "fashion") return undefined;
+  if (variant === "tech") return { background: "linear-gradient(135deg, #06b6d4, #8b5cf6)", boxShadow: "0 0 35px rgba(34,211,238,.28)" };
+  return { background: theme.primary, boxShadow: `0 18px 40px -20px ${theme.primary}` };
+}
+
+function getStoreBrandTitleClass(variant) {
+  if (variant === "luxury") return "block whitespace-nowrap font-serif text-base font-bold tracking-wide text-slate-950 sm:text-xl";
+  if (variant === "tech") return "block whitespace-nowrap font-heading text-sm font-black text-white sm:text-lg";
+  return "block whitespace-nowrap font-heading text-sm font-black text-slate-950 sm:text-lg dark:text-white";
+}
+
+function getStoreBrandSubClass(variant) {
+  if (variant === "tech") return "block whitespace-nowrap text-[10px] font-bold text-cyan-100/70 sm:text-xs";
+  if (variant === "luxury") return "block whitespace-nowrap text-[10px] font-bold text-[#8a6a22] sm:text-xs";
+  return "block whitespace-nowrap text-[10px] font-bold text-slate-500 sm:text-xs";
+}
+
+function getStoreNavClass(variant) {
+  if (variant === "luxury") return "mr-auto flex min-w-0 flex-1 items-center justify-center gap-2 overflow-x-auto px-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
+  if (variant === "fashion") return "mr-auto flex min-w-0 flex-1 items-center justify-end gap-1 overflow-x-auto px-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
+  return "mr-auto flex min-w-0 flex-1 items-center gap-1 overflow-x-auto px-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
+}
+
+function getStoreNavItemClass(isActive, variant) {
+  if (variant === "luxury") return `shrink-0 px-4 py-2 font-serif text-sm font-bold transition ${isActive ? "text-white" : "text-slate-600 hover:text-[#8a6a22]"}`;
+  if (variant === "tech") return `shrink-0 rounded-2xl px-3 py-2 text-xs font-black transition sm:px-4 sm:text-sm ${isActive ? "text-slate-950" : "text-cyan-50/70 hover:bg-cyan-300/10 hover:text-white"}`;
+  if (variant === "fashion") return `shrink-0 rounded-full px-3 py-2 text-xs font-black transition sm:px-4 sm:text-sm ${isActive ? "text-white" : "text-slate-600 hover:bg-slate-100 hover:text-slate-950"}`;
+  return `shrink-0 rounded-xl px-3 py-2 text-xs font-black transition sm:rounded-2xl sm:px-4 sm:text-sm ${isActive ? "text-white" : "text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white"}`;
+}
+
+function getStoreActiveNavStyle(theme, variant) {
+  if (variant === "luxury") return { background: "#8a6a22" };
+  if (variant === "tech") return { background: "#67e8f9", boxShadow: "0 0 24px rgba(103,232,249,.28)" };
+  if (variant === "fashion") return { background: "#020617" };
+  return { background: theme.primary };
 }
