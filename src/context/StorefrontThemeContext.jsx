@@ -4,6 +4,7 @@ import { useToast } from "./ToastContext";
 
 const StorefrontThemeContext = createContext(null);
 const storageKey = "sila-storefront-themes";
+const fixedActiveSlug = "sila-premium";
 
 export function StorefrontThemeProvider({ children }) {
   const { showToast } = useToast();
@@ -23,7 +24,7 @@ export function StorefrontThemeProvider({ children }) {
   );
 
   const activeTheme = useMemo(
-    () => themes.find((theme) => theme.active) || themes[0] || starterStorefrontThemes[0],
+    () => themes.find((theme) => theme.slug === fixedActiveSlug) || themes.find((theme) => theme.active) || themes[0] || starterStorefrontThemes[0],
     [themes],
   );
 
@@ -35,7 +36,7 @@ export function StorefrontThemeProvider({ children }) {
       id: nextId,
       slug: theme.slug || `theme-${nextId}`,
       builtIn: false,
-      active: false,
+      active: theme.slug === fixedActiveSlug,
       updatedAt: formatNow(),
     });
     setThemes((current) => [nextTheme, ...current]);
@@ -51,6 +52,7 @@ export function StorefrontThemeProvider({ children }) {
           ? normalizeStorefrontTheme({
               ...theme,
               ...updates,
+              active: theme.slug === fixedActiveSlug,
               updatedAt: formatNow(),
             })
           : theme,
@@ -68,11 +70,18 @@ export function StorefrontThemeProvider({ children }) {
   };
 
   const activateTheme = (themeId) => {
+    const target = themes.find((theme) => theme.id === themeId);
+    if (target && target.slug !== fixedActiveSlug) {
+      setSelectedId(themeId);
+      showToast("الثيم النشط ثابت", "سيلا بريميوم هو الثيم المنشور الثابت. يمكنك تخصيص أي قالب كنسخة، لكن واجهة المتجر تستخدم الثيم الثابت.", "info");
+      return;
+    }
+
     setThemes((current) =>
       current.map((theme) =>
         normalizeStorefrontTheme({
           ...theme,
-          active: theme.id === themeId,
+          active: theme.slug === fixedActiveSlug,
           updatedAt: theme.id === themeId ? formatNow() : theme.updatedAt,
         }),
       ),
@@ -140,9 +149,10 @@ function readThemes() {
   try {
     const raw = localStorage.getItem(storageKey);
     const parsed = raw ? JSON.parse(raw) : starterStorefrontThemes;
-    return Array.isArray(parsed) && parsed.length ? mergeBuiltInThemes(parsed.map(normalizeStorefrontTheme)) : starterStorefrontThemes;
+    const themes = Array.isArray(parsed) && parsed.length ? mergeBuiltInThemes(parsed.map(normalizeStorefrontTheme)) : starterStorefrontThemes;
+    return enforceFixedActiveTheme(themes);
   } catch {
-    return starterStorefrontThemes;
+    return enforceFixedActiveTheme(starterStorefrontThemes);
   }
 }
 
@@ -150,6 +160,17 @@ function mergeBuiltInThemes(savedThemes) {
   const savedSlugs = new Set(savedThemes.map((theme) => theme.slug));
   const missingBuiltIns = starterStorefrontThemes.filter((theme) => theme.builtIn && !savedSlugs.has(theme.slug));
   return [...savedThemes, ...missingBuiltIns];
+}
+
+function enforceFixedActiveTheme(themes) {
+  const hasFixed = themes.some((theme) => theme.slug === fixedActiveSlug);
+  const source = hasFixed ? themes : [...starterStorefrontThemes, ...themes];
+  return source.map((theme) =>
+    normalizeStorefrontTheme({
+      ...theme,
+      active: theme.slug === fixedActiveSlug,
+    }),
+  );
 }
 
 function formatNow() {

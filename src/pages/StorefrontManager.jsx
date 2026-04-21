@@ -8,6 +8,7 @@ import { useStorefrontThemes } from "../context/StorefrontThemeContext";
 import { storefrontLayoutOptions, storefrontSectionLabels } from "../data/storefrontThemes";
 
 const pageSize = 12;
+const fixedActiveSlug = "sila-premium";
 const categoryOptions = ["الكل", "أزياء", "الجمال", "منزل", "أقمشة", "أطفال", "عروض", "ألعاب", "فاخر", "تطبيق", "تقنية", "إلكترونيات"];
 
 export default function StorefrontManager() {
@@ -176,6 +177,8 @@ export default function StorefrontManager() {
 }
 
 function ThemeMarketCard({ theme, selected, onSelect, onActivate }) {
+  const fixedActive = theme.slug === fixedActiveSlug;
+
   return (
     <article
       className={`group overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-slate-200/70 dark:bg-slate-950 dark:hover:shadow-black/20 ${
