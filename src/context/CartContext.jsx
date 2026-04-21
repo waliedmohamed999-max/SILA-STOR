@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { markCurrentCartConverted, upsertAbandonedCart } from "../services/abandonedCartService";
 import { useToast } from "./ToastContext";
 
 const CartContext = createContext(null);
@@ -119,6 +120,16 @@ export function CartProvider({ children }) {
   const total = subtotalValue - discountAmount + shippingCost;
   const count = items.reduce((sum, item) => sum + item.quantity, 0);
 
+  useEffect(() => {
+    upsertAbandonedCart({
+      items,
+      checkoutForm,
+      subtotal: subtotalValue,
+      total,
+      discount,
+    });
+  }, [items, checkoutForm, subtotalValue, total, discount]);
+
   const updateCheckoutField = (key, value) => {
     setCheckoutForm((current) => ({ ...current, [key]: value }));
   };
@@ -164,6 +175,7 @@ export function CartProvider({ children }) {
     };
 
     setOrders((current) => [order, ...current]);
+    markCurrentCartConverted(order.id);
     clearCart();
     setDiscount({ code: "", rate: 0 });
     if (!checkoutForm.saveInfo) resetCheckoutForm();

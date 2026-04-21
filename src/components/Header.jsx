@@ -39,8 +39,8 @@ export default function Header({ onMenu, onCart }) {
   };
 
   return (
-    <header className="sticky top-0 z-20 border-b border-slate-200 bg-slate-50/80 px-4 py-3 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/80">
-      <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-20 border-b border-slate-200 bg-slate-50/80 px-3 py-3 backdrop-blur-xl sm:px-4 dark:border-slate-800 dark:bg-slate-950/80">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-3">
         <Button aria-label="فتح التنقل" variant="secondary" size="icon" onClick={onMenu} className="lg:hidden">
           <Menu size={20} />
         </Button>
@@ -52,7 +52,7 @@ export default function Header({ onMenu, onCart }) {
           <Search size={18} className="text-slate-400" />
           <input aria-label="بحث عام" placeholder="ابحث في النظام" className="w-full bg-transparent text-sm text-slate-800 outline-none placeholder:text-slate-400 dark:text-slate-100" />
         </label>
-        <Button aria-label="الإشعارات" variant="secondary" size="icon">
+        <Button aria-label="الإشعارات" variant="secondary" size="icon" className="hidden sm:inline-flex">
           <Bell size={20} />
         </Button>
         <Dropdown
@@ -83,7 +83,7 @@ export default function Header({ onMenu, onCart }) {
         <button
           aria-label="فتح السلة"
           onClick={onCart}
-          className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-white shadow-lg shadow-indigo-500/25 transition hover:bg-indigo-600"
+          className="relative hidden h-10 w-10 items-center justify-center rounded-xl bg-accent text-white shadow-lg shadow-indigo-500/25 transition hover:bg-indigo-600 min-[380px]:inline-flex"
         >
           <ShoppingCart size={20} />
           {count > 0 && (

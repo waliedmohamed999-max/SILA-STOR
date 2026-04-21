@@ -10,12 +10,12 @@ export default function DashboardLayout() {
   const [cartOpen, setCartOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <div className="min-h-screen overflow-x-hidden bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
       <div className={`transition-all duration-300 ${collapsed ? "lg:pr-20" : "lg:pr-60"}`}>
         <Header onMenu={() => setMobileOpen(true)} onCart={() => setCartOpen(true)} />
-        <main className="p-3 pb-24 sm:p-6">
-          <div className="animate-[fadeIn_.2s_ease-out]">
+        <main className="min-w-0 p-3 pb-24 sm:p-6">
+          <div className="min-w-0 animate-[fadeIn_.2s_ease-out]">
             <Outlet />
           </div>
         </main>

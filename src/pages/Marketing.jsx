@@ -1,11 +1,13 @@
-import { BadgePercent, BarChart3, Gift, Link2, Megaphone, Percent, Plus, Target, Ticket, Users } from "lucide-react";
-import { useMemo, useState } from "react";
+import { BadgePercent, BarChart3, Clock3, Gift, Link2, Mail, Megaphone, Percent, Phone, Plus, ShoppingCart, Target, Ticket, Trash2, Users } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import Badge from "../components/Badge";
 import Button from "../components/Button";
 import ProgressBar from "../components/ProgressBar";
+import { deleteAbandonedCart, readAbandonedCarts, updateAbandonedCart } from "../services/abandonedCartService";
 import { money } from "../utils/formatters";
 
 const sections = [
+  { key: "abandoned", label: "السلات المتروكة", icon: ShoppingCart },
   { key: "affiliate", label: "التسويق بالعمولة", icon: Link2 },
   { key: "packages", label: "الحزم التسويقية", icon: Gift },
   { key: "campaigns", label: "الحملات التسويقية", icon: Megaphone },
@@ -37,7 +39,18 @@ const discounts = [
 ];
 
 export default function Marketing() {
-  const [activeSection, setActiveSection] = useState("affiliate");
+  const [activeSection, setActiveSection] = useState("abandoned");
+  const [abandonedCarts, setAbandonedCarts] = useState(() => readAbandonedCarts());
+
+  useEffect(() => {
+    const refresh = () => setAbandonedCarts(readAbandonedCarts());
+    window.addEventListener("storage", refresh);
+    window.addEventListener("sila:abandoned-carts-updated", refresh);
+    return () => {
+      window.removeEventListener("storage", refresh);
+      window.removeEventListener("sila:abandoned-carts-updated", refresh);
+    };
+  }, []);
 
   const summary = useMemo(
     () => ({
@@ -45,8 +58,11 @@ export default function Marketing() {
       campaignRevenue: campaigns.reduce((sum, item) => sum + item.revenue, 0),
       activeDiscounts: discounts.filter((item) => item.status === "active").length,
       activeCampaigns: campaigns.filter((item) => item.status === "active").length,
+      abandonedCount: abandonedCarts.filter((item) => item.status !== "converted").length,
+      abandonedValue: abandonedCarts.filter((item) => item.status !== "converted").reduce((sum, item) => sum + Number(item.total || 0), 0),
+      recoverableContacts: abandonedCarts.filter((item) => item.status !== "converted" && (item.customer?.email || item.customer?.phone)).length,
     }),
-    []
+    [abandonedCarts]
   );
 
   return (
@@ -92,6 +108,8 @@ export default function Marketing() {
           <div className="mt-4 space-y-4">
             <MiniMetric label="إيراد العمولة" value={money(summary.affiliateRevenue)} />
             <MiniMetric label="إيراد الحملات" value={money(summary.campaignRevenue)} />
+            <MiniMetric label="السلات المتروكة" value={String(summary.abandonedCount)} />
+            <MiniMetric label="قيمة السلات" value={money(summary.abandonedValue)} />
             <MiniMetric label="الحملات النشطة" value={String(summary.activeCampaigns)} />
             <MiniMetric label="الخصومات الفعالة" value={String(summary.activeDiscounts)} />
           </div>
@@ -102,16 +120,133 @@ export default function Marketing() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <SummaryCard title="إيراد العمولة" value={money(summary.affiliateRevenue)} icon={Users} tone="accent" />
           <SummaryCard title="إيراد الحملات" value={money(summary.campaignRevenue)} icon={BarChart3} tone="success" />
-          <SummaryCard title="الحملات النشطة" value={String(summary.activeCampaigns)} icon={Target} tone="warning" />
-          <SummaryCard title="العروض المباشرة" value={String(summary.activeDiscounts)} icon={Ticket} tone="danger" />
+          <SummaryCard title="السلات المتروكة" value={String(summary.abandonedCount)} icon={ShoppingCart} tone="warning" />
+          <SummaryCard title="جهات قابلة للاستهداف" value={String(summary.recoverableContacts)} icon={Target} tone="danger" />
         </div>
 
+        {activeSection === "abandoned" && <AbandonedCartsSection carts={abandonedCarts} onRefresh={() => setAbandonedCarts(readAbandonedCarts())} />}
         {activeSection === "affiliate" && <AffiliateSection />}
         {activeSection === "packages" && <PackagesSection />}
         {activeSection === "campaigns" && <CampaignsSection />}
         {activeSection === "discounts" && <DiscountsSection />}
       </section>
     </div>
+  );
+}
+
+function AbandonedCartsSection({ carts, onRefresh }) {
+  const [status, setStatus] = useState("open");
+  const filtered = carts.filter((cart) => status === "all" || cart.status === status);
+
+  const updateStatus = (cart, nextStatus) => {
+    updateAbandonedCart(cart.id, { status: nextStatus });
+    onRefresh();
+  };
+
+  const removeCart = (cart) => {
+    deleteAbandonedCart(cart.id);
+    onRefresh();
+  };
+
+  return (
+    <section className="card p-5 sm:p-6">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h2 className="font-heading text-2xl font-black text-slate-950 dark:text-white">السلات المتروكة</h2>
+          <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
+            يتم تسجيل أي زائر يضيف منتجات للسلة، وتظهر بياناته بمجرد كتابتها في صفحة الدفع. عند إتمام الشراء تتحول السلة تلقائيا إلى مسترجعة.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {[
+            ["open", "مفتوحة"],
+            ["targeted", "تم استهدافها"],
+            ["converted", "مسترجعة"],
+            ["all", "الكل"],
+          ].map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setStatus(key)}
+              className={`rounded-full border px-4 py-2 text-sm font-black transition ${
+                status === key ? "border-accent bg-accent text-white" : "border-slate-200 bg-white text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-4">
+        {filtered.length ? (
+          filtered.map((cart) => (
+            <article key={cart.id} className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800 sm:p-5">
+              <div className="grid gap-4 xl:grid-cols-[1.1fr_.8fr_.8fr_auto] xl:items-start">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-heading text-lg font-black text-slate-950 dark:text-white">
+                      {cart.customer?.name || cart.customer?.email || cart.customer?.phone || "زائر بدون بيانات"}
+                    </p>
+                    <Badge tone={cart.status === "converted" ? "success" : cart.status === "targeted" ? "warning" : "accent"}>
+                      {cart.status === "converted" ? "مسترجعة" : cart.status === "targeted" ? "تم استهدافها" : "مفتوحة"}
+                    </Badge>
+                  </div>
+                  <div className="mt-3 grid gap-2 text-sm font-bold text-slate-500">
+                    <ContactLine icon={Mail} value={cart.customer?.email || "لا يوجد بريد"} />
+                    <ContactLine icon={Phone} value={cart.customer?.phone || "لا يوجد رقم"} />
+                    <ContactLine icon={Clock3} value={`آخر نشاط: ${formatDate(cart.lastActivityAt)}`} />
+                  </div>
+                </div>
+
+                <Metric label="قيمة السلة" value={money(cart.total || cart.subtotal || 0)} />
+                <Metric label="عدد المنتجات" value={String(cart.itemsCount || cart.items?.length || 0)} />
+
+                <div className="grid gap-2">
+                  {cart.customer?.phone ? (
+                    <a href={`https://wa.me/${normalizePhone(cart.customer.phone)}`} target="_blank" rel="noreferrer">
+                      <Button className="w-full justify-center" size="sm">واتساب</Button>
+                    </a>
+                  ) : null}
+                  {cart.customer?.email ? (
+                    <a href={`mailto:${cart.customer.email}?subject=إكمال طلبك من SILA`}>
+                      <Button className="w-full justify-center" variant="secondary" size="sm">إيميل</Button>
+                    </a>
+                  ) : null}
+                  {cart.status !== "converted" ? (
+                    <Button className="w-full justify-center" variant="secondary" size="sm" onClick={() => updateStatus(cart, "targeted")}>
+                      تحديد كمستهدف
+                    </Button>
+                  ) : null}
+                  <Button className="w-full justify-center" variant="danger" size="sm" onClick={() => removeCart(cart)}>
+                    <Trash2 size={15} />
+                    حذف
+                  </Button>
+                </div>
+              </div>
+
+              <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+                {(cart.items || []).map((item) => (
+                  <div key={`${cart.id}-${item.id}`} className="flex min-w-52 items-center gap-3 rounded-2xl bg-slate-50 p-2 dark:bg-slate-900">
+                    <img src={item.image} alt={item.name} className="h-12 w-12 rounded-xl object-cover" />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-black text-slate-950 dark:text-white">{item.name}</p>
+                      <p className="text-xs font-bold text-slate-500">{item.quantity}x · {money(item.price)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </article>
+          ))
+        ) : (
+          <div className="rounded-2xl border border-dashed border-slate-300 p-8 text-center dark:border-slate-700">
+            <ShoppingCart className="mx-auto text-slate-400" size={34} />
+            <p className="mt-3 font-heading text-lg font-black text-slate-950 dark:text-white">لا توجد سلات بهذه الحالة</p>
+            <p className="mt-1 text-sm text-slate-500">أضف منتجا للسلة من المتجر ثم افتح صفحة الدفع لتسجيل بيانات العميل.</p>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -289,6 +424,24 @@ function SummaryCard({ title, value, icon: Icon, tone }) {
       </div>
     </div>
   );
+}
+
+function ContactLine({ icon: Icon, value }) {
+  return (
+    <div className="flex min-w-0 items-center gap-2">
+      <Icon size={15} className="shrink-0 text-slate-400" />
+      <span className="min-w-0 truncate">{value}</span>
+    </div>
+  );
+}
+
+function formatDate(value) {
+  if (!value) return "غير معروف";
+  return new Date(value).toLocaleString("ar-SA", { dateStyle: "short", timeStyle: "short" });
+}
+
+function normalizePhone(value) {
+  return String(value || "").replace(/[^\d]/g, "");
 }
 
 function MiniMetric({ label, value }) {
