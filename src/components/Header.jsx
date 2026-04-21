@@ -1,5 +1,6 @@
 import { Bell, ChevronDown, Menu, Monitor, Moon, Search, ShoppingCart, Sun } from "lucide-react";
 import { useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useTheme } from "../context/ThemeContext";
 import Button from "./Button";
@@ -26,6 +27,7 @@ function resolveTitle(pathname) {
 
 export default function Header({ onMenu, onCart }) {
   const { pathname } = useLocation();
+  const { currentUser, logout } = useAuth();
   const { count } = useCart();
   const { theme, setTheme } = useTheme();
   const title = resolveTitle(pathname);
@@ -87,18 +89,41 @@ export default function Header({ onMenu, onCart }) {
         <Dropdown
           trigger={
             <button className="hidden items-center gap-2 rounded-2xl border border-slate-200 bg-white p-1.5 pr-2 transition hover:border-indigo-300 sm:flex dark:border-slate-800 dark:bg-slate-950">
-              <span className="grid h-8 w-8 place-items-center rounded-xl bg-base text-xs font-black text-white dark:bg-white dark:text-base">MC</span>
+              <span className="grid h-8 w-8 place-items-center rounded-xl bg-base text-xs font-black text-white dark:bg-white dark:text-base">
+                {getInitials(currentUser?.name)}
+              </span>
               <ChevronDown size={16} className="text-slate-500" />
             </button>
           }
         >
+          <div className="mb-2 rounded-xl bg-slate-50 px-3 py-2 text-right dark:bg-slate-900">
+            <p className="text-sm font-black text-slate-950 dark:text-white">{currentUser?.name || "Admin"}</p>
+            <p className="text-xs text-slate-500">{currentUser?.email}</p>
+          </div>
           {["إعدادات الحساب", "مساحة الفريق", "مركز الفواتير"].map((label) => (
             <button key={label} className="w-full rounded-xl px-3 py-2 text-right text-sm font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-900">
               {label}
             </button>
           ))}
+          <button
+            type="button"
+            onClick={logout}
+            className="mt-2 w-full rounded-xl px-3 py-2 text-right text-sm font-black text-danger hover:bg-red-50 dark:hover:bg-red-950/20"
+          >
+            تسجيل الخروج
+          </button>
         </Dropdown>
       </div>
     </header>
   );
+}
+
+function getInitials(name = "") {
+  const parts = String(name).trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "AD";
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
 }

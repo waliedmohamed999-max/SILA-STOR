@@ -1,10 +1,14 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { MessageCircle } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import { useLiveChat } from "../../context/LiveChatContext";
 import ChatWindow from "./ChatWindow";
 
 export default function ChatWidget() {
+  const { pathname } = useLocation();
   const { widgetOpen, setWidgetOpen, unreadCount, agentSettings, startConversation, activeConversation } = useLiveChat();
+
+  if (pathname === "/login" || pathname === "/register") return null;
 
   const open = () => {
     if (!activeConversation) startConversation();

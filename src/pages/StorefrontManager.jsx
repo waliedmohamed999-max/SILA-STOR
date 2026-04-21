@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 import Badge from "../components/Badge";
 import Button from "../components/Button";
 import Pagination from "../components/Pagination";
-import ThemeCanvas from "../components/storefront/ThemeCanvas";
 import { useStorefrontThemes } from "../context/StorefrontThemeContext";
 import { storefrontLayoutOptions, storefrontSectionLabels } from "../data/storefrontThemes";
 
@@ -79,7 +78,7 @@ export default function StorefrontManager() {
             </div>
             <Badge tone="success">منشور</Badge>
           </div>
-          <ThemeCanvas theme={activeTheme} preview />
+          <ThemeShowcaseCard theme={activeTheme} featured />
         </div>
 
         <div className="space-y-6">
@@ -238,7 +237,7 @@ export default function StorefrontManager() {
               </Button>
             </div>
           </div>
-          <ThemeCanvas theme={selectedTheme} preview />
+          <ThemeShowcaseCard theme={selectedTheme} />
         </div>
 
         <div className="card p-5 sm:p-6">
@@ -270,18 +269,98 @@ export default function StorefrontManager() {
 }
 
 function ThemeMiniPreview({ theme }) {
-  const hero = theme.pageSections?.find((section) => section.type === "hero");
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800">
-      <div className="h-32 w-full" style={{ background: theme.background }}>
-        <div className="h-8" style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})` }} />
-        <div className="grid h-24 grid-cols-[1fr_70px] gap-2 p-2">
-          <div className="rounded-xl" style={{ background: theme.surface }}>
-            <div className="m-2 h-3 w-16 rounded-full" style={{ background: theme.primary }} />
-            <div className="mx-2 mt-2 h-2 w-24 rounded-full bg-slate-200" />
-            <div className="mx-2 mt-1 h-2 w-16 rounded-full bg-slate-200" />
+    <ThemeMockupImage theme={theme} className="h-36" compact />
+  );
+}
+
+function ThemeShowcaseCard({ theme, featured = false }) {
+  const visibleSections = (theme.pageSections || []).filter((section) => section.enabled);
+  const hero = theme.pageSections?.find((section) => section.type === "hero");
+  const description = hero?.subtitle || theme.heroSubtitle || "معاينة مصغرة توضح شكل الثيم وتقسيم الصفحة بدون تحميل واجهة المتجر بالكامل.";
+
+  return (
+    <article className="grid gap-5 xl:grid-cols-[minmax(280px,520px)_1fr] xl:items-start">
+      <ThemeMockupImage theme={theme} className={featured ? "h-[320px]" : "h-[280px]"} />
+      <div className="space-y-4">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="font-heading text-2xl font-black text-slate-950 dark:text-white">{theme.name}</h3>
+            <Badge tone={theme.active ? "success" : theme.builtIn ? "accent" : "warning"}>
+              {theme.active ? "منشور" : theme.builtIn ? "مبني" : "مخصص"}
+            </Badge>
           </div>
-          <img src={hero?.image || theme.heroImage} alt={theme.name} className="h-full w-full rounded-xl object-cover" />
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-500">{description}</p>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Metric label="التخطيط" value={theme.layout} />
+          <Metric label="الأقسام الظاهرة" value={visibleSections.length} />
+          <Metric label="الخط" value={theme.font} />
+          <Metric label="آخر تعديل" value={theme.updatedAt} />
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+          <p className="mb-3 text-xs font-black text-slate-500">تقسيم الصفحة</p>
+          <div className="flex flex-wrap gap-2">
+            {visibleSections.slice(0, 8).map((section, index) => (
+              <span key={section.id} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-black text-slate-600 dark:bg-slate-900 dark:text-slate-300">
+                {index + 1}. {storefrontSectionLabels[section.type] || section.type}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Link to={`/admin/storefront/editor/${theme.id}`}>
+            <Button variant="secondary">
+              <PencilLine size={17} />
+              تخصيص الثيم
+            </Button>
+          </Link>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function ThemeMockupImage({ theme, className = "h-72", compact = false }) {
+  const hero = theme.pageSections?.find((section) => section.type === "hero");
+  const sections = (theme.pageSections || []).filter((section) => section.enabled).slice(0, compact ? 5 : 7);
+
+  return (
+    <div className={`overflow-hidden rounded-3xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950 ${className}`}>
+      <div className="flex h-full flex-col overflow-hidden rounded-2xl" style={{ background: theme.background }}>
+        <div className="flex h-9 shrink-0 items-center gap-1.5 px-4" style={{ background: `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})` }}>
+          <span className="h-2 w-2 rounded-full bg-white/70" />
+          <span className="h-2 w-2 rounded-full bg-white/50" />
+          <span className="h-2 w-8 rounded-full bg-white/80" />
+          <span className="mr-auto h-3 w-24 rounded-full bg-white/70" />
+        </div>
+
+        <div className="grid min-h-0 flex-1 gap-3 p-3">
+          <div className="grid min-h-0 grid-cols-[1.05fr_.95fr] overflow-hidden rounded-2xl border border-slate-200/70" style={{ background: theme.surface }}>
+            <div className="relative overflow-hidden">
+              <img src={hero?.image || theme.heroImage} alt={theme.name} className="h-full w-full object-cover" />
+              <div className="absolute inset-0" style={{ background: `${theme.primary}55` }} />
+            </div>
+            <div className="flex flex-col justify-center gap-2 p-4">
+              <span className="h-5 w-20 rounded-full" style={{ background: `${theme.primary}22` }} />
+              <span className="h-4 w-full rounded-full bg-slate-200 dark:bg-slate-800" />
+              <span className="h-4 w-4/5 rounded-full bg-slate-200 dark:bg-slate-800" />
+              <span className="mt-2 h-8 w-28 rounded-xl" style={{ background: theme.primary }} />
+            </div>
+          </div>
+
+          <div className={`grid gap-2 ${compact ? "grid-cols-3" : "grid-cols-4"}`}>
+            {sections.map((section, index) => (
+              <div key={section.id} className="rounded-xl border border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-900">
+                <div className="mb-2 h-10 rounded-lg" style={{ background: index % 2 ? `${theme.secondary}22` : `${theme.primary}22` }} />
+                <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-800" />
+                <div className="mt-1 h-2 w-2/3 rounded-full bg-slate-200 dark:bg-slate-800" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
