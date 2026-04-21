@@ -41,7 +41,7 @@ export function readPaymentState() {
 }
 
 export function persistPaymentState(state) {
-  localStorage.setItem(paymentStorageKey, JSON.stringify(state));
+  localStorage.setItem(paymentStorageKey, JSON.stringify(redactPaymentState(state)));
 }
 
 export function getEnabledCountries(settings) {
@@ -151,6 +151,27 @@ export async function refundPayment(transaction, amount) {
 
 function delay(ms) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+function redactPaymentState(state) {
+  return {
+    ...state,
+    settings: {
+      ...state.settings,
+      gateways: (state.settings?.gateways || []).map((gateway) => ({
+        ...gateway,
+        apiKey: redactSecret(gateway.apiKey),
+        secretKey: redactSecret(gateway.secretKey),
+        webhookSecret: redactSecret(gateway.webhookSecret),
+      })),
+    },
+  };
+}
+
+function redactSecret(value) {
+  if (!value) return "";
+  if (String(value).includes("*")) return value;
+  return "stored-on-server";
 }
 
 function mergeGateways(defaultGateways, savedGateways = []) {

@@ -1,5 +1,5 @@
 import { Bell, ChevronDown, Menu, Monitor, Moon, Search, ShoppingCart, Sun } from "lucide-react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useTheme } from "../context/ThemeContext";
@@ -28,10 +28,15 @@ function resolveTitle(pathname) {
 
 export default function Header({ onMenu, onCart }) {
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const { currentUser, logout } = useAuth();
   const { count } = useCart();
   const { theme, setTheme } = useTheme();
   const title = resolveTitle(pathname);
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login", { replace: true });
+  };
 
   return (
     <header className="sticky top-0 z-20 border-b border-slate-200 bg-slate-50/80 px-4 py-3 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-950/80">
@@ -108,7 +113,7 @@ export default function Header({ onMenu, onCart }) {
           ))}
           <button
             type="button"
-            onClick={logout}
+            onClick={handleLogout}
             className="mt-2 w-full rounded-xl px-3 py-2 text-right text-sm font-black text-danger hover:bg-red-50 dark:hover:bg-red-950/20"
           >
             تسجيل الخروج

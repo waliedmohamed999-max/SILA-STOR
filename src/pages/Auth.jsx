@@ -17,18 +17,18 @@ function AuthScreen({ mode }) {
   const isRegister = mode === "register";
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, login, register } = useAuth();
+  const { isAuthenticated, login, register, registrationEnabled, demoAuthEnabled, demoCredentialsAvailable, demoAdminEmail, requiresBackend } = useAuth();
   const { showToast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     name: "",
-    email: "admin@sila.test",
-    password: "admin123",
+    email: demoCredentialsAvailable ? demoAdminEmail : "",
+    password: "",
     remember: true,
   });
 
-  const redirectTo = useMemo(() => location.state?.from || "/admin", [location.state]);
+  const redirectTo = useMemo(() => sanitizeRedirect(location.state?.from), [location.state]);
 
   if (isAuthenticated) return <Navigate to={redirectTo} replace />;
 
@@ -39,10 +39,11 @@ function AuthScreen({ mode }) {
     setLoading(true);
     try {
       if (isRegister) {
-        register(form);
+        if (!registrationEnabled) throw new Error("إنشاء الحسابات متوقف في وضع النشر.");
+        await register(form);
         showToast("تم إنشاء الحساب", "تم تسجيل الدخول إلى لوحة التحكم بنجاح.", "success");
       } else {
-        login(form);
+        await login(form);
         showToast("مرحبًا بك", "تم تسجيل الدخول إلى لوحة التحكم.", "success");
       }
       navigate(redirectTo, { replace: true });
@@ -150,17 +151,31 @@ function AuthScreen({ mode }) {
                 {loading ? "جاري التحقق..." : isRegister ? "إنشاء الحساب والدخول" : "دخول لوحة التحكم"}
               </Button>
 
-              <div className="rounded-2xl bg-indigo-500/10 p-4 text-sm text-indigo-700 dark:text-indigo-200">
-                <p className="font-black">بيانات تجربة جاهزة</p>
-                <p className="mt-1 font-mono text-xs">admin@sila.test / admin123</p>
-              </div>
+              {demoAuthEnabled && demoCredentialsAvailable ? (
+                <div className="rounded-2xl bg-indigo-500/10 p-4 text-sm text-indigo-700 dark:text-indigo-200">
+                  <p className="font-black">بيانات تجربة جاهزة</p>
+                  <p className="mt-1 font-mono text-xs">{demoAdminEmail} / من ملف البيئة</p>
+                </div>
+              ) : requiresBackend ? (
+                <div className="rounded-2xl bg-emerald-500/10 p-4 text-sm font-bold text-emerald-700 dark:text-emerald-200">
+                  تسجيل الدخول مضبوط للعمل عبر باك إند آمن. يجب ضبط VITE_API_BASE_URL قبل النشر.
+                </div>
+              ) : (
+                <div className="rounded-2xl bg-amber-500/10 p-4 text-sm font-bold text-amber-700 dark:text-amber-200">
+                  تسجيل الدخول التجريبي متوقف في وضع النشر. اربط المصادقة بباك إند آمن قبل إتاحة لوحة التحكم.
+                </div>
+              )}
             </form>
 
             <div className="mt-5 text-center text-sm font-bold text-slate-500">
               {isRegister ? "لديك حساب بالفعل؟" : "ليس لديك حساب؟"}{" "}
-              <Link to={isRegister ? "/login" : "/register"} className="text-indigo-600 hover:underline">
-                {isRegister ? "تسجيل الدخول" : "إنشاء حساب جديد"}
-              </Link>
+              {registrationEnabled || isRegister ? (
+                <Link to={isRegister ? "/login" : "/register"} className="text-indigo-600 hover:underline">
+                  {isRegister ? "تسجيل الدخول" : "إنشاء حساب جديد"}
+                </Link>
+              ) : (
+                <span className="text-slate-400">إنشاء الحسابات متوقف للنشر</span>
+              )}
             </div>
           </div>
         </section>
@@ -185,4 +200,10 @@ function Field({ icon: Icon, label, value, onChange, placeholder, type = "text" 
       </div>
     </label>
   );
+}
+
+function sanitizeRedirect(value) {
+  const path = typeof value === "string" ? value : "/admin";
+  if (!path.startsWith("/") || path.startsWith("//") || path.startsWith("/login") || path.startsWith("/register")) return "/admin";
+  return path;
 }

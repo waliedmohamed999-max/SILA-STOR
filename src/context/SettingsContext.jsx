@@ -52,10 +52,10 @@ const initialSettings = {
         code: "SILA",
         status: "connected",
         enabled: true,
-        sandbox: false,
-        apiKey: "sk_live_sila_shipping",
+        sandbox: true,
+        apiKey: "shipping_demo_********",
         accountNumber: "SILA-200145",
-        webhookSecret: "whsec_sila_shipping",
+        webhookSecret: "whsec_********",
         trackingUrl: "https://track.sila.store/{tracking_number}",
         services: [
           { key: "standard", label: "الشحن القياسي", eta: "2-4 أيام عمل", fee: "12", enabled: true },
@@ -69,9 +69,9 @@ const initialSettings = {
         status: "connected",
         enabled: true,
         sandbox: true,
-        apiKey: "sk_test_fast_track",
+        apiKey: "fast_track_demo_********",
         accountNumber: "FAST-44009",
-        webhookSecret: "whsec_fast_track",
+        webhookSecret: "whsec_********",
         trackingUrl: "https://fasttrack.example/track/{tracking_number}",
         services: [
           { key: "express", label: "الشحن السريع", eta: "24-48 ساعة", fee: "25", enabled: true },
@@ -223,7 +223,7 @@ export function SettingsProvider({ children }) {
   const [settings, setSettings] = useState(() => readStorage(storageKey, initialSettings));
 
   useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify(settings));
+    localStorage.setItem(storageKey, JSON.stringify(redactSettings(settings)));
   }, [settings]);
 
   const updateSectionField = (section, field, value) => {
@@ -273,6 +273,30 @@ function readStorage(key, fallback) {
   } catch {
     return fallback;
   }
+}
+
+function redactSettings(settings) {
+  return {
+    ...settings,
+    shipping: {
+      ...settings.shipping,
+      providers: (settings.shipping?.providers || []).map((provider) => ({
+        ...provider,
+        apiKey: redactSecret(provider.apiKey),
+        webhookSecret: redactSecret(provider.webhookSecret),
+      })),
+    },
+    integrations: {
+      ...settings.integrations,
+      webhookUrl: settings.integrations?.webhookUrl || "",
+    },
+  };
+}
+
+function redactSecret(value) {
+  if (!value) return "";
+  if (String(value).includes("*")) return value;
+  return "stored-on-server";
 }
 
 function sectionLabel(section) {
