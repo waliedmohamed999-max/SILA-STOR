@@ -139,10 +139,16 @@ function readThemes() {
   try {
     const raw = localStorage.getItem(storageKey);
     const parsed = raw ? JSON.parse(raw) : starterStorefrontThemes;
-    return Array.isArray(parsed) && parsed.length ? parsed.map(normalizeStorefrontTheme) : starterStorefrontThemes;
+    return Array.isArray(parsed) && parsed.length ? mergeBuiltInThemes(parsed.map(normalizeStorefrontTheme)) : starterStorefrontThemes;
   } catch {
     return starterStorefrontThemes;
   }
+}
+
+function mergeBuiltInThemes(savedThemes) {
+  const savedSlugs = new Set(savedThemes.map((theme) => theme.slug));
+  const missingBuiltIns = starterStorefrontThemes.filter((theme) => theme.builtIn && !savedSlugs.has(theme.slug));
+  return [...savedThemes, ...missingBuiltIns];
 }
 
 function formatNow() {

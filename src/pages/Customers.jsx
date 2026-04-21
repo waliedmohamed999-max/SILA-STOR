@@ -170,6 +170,44 @@ export default function Customers() {
               <td className="px-4 py-4 text-slate-500">{customer.lastSeen}</td>
             </tr>
           )}
+          renderMobileCard={(customer) => (
+            <button
+              key={customer.id}
+              type="button"
+              onClick={() => setSelected(customer)}
+              className={`w-full rounded-2xl border p-4 text-right transition ${
+                selected?.id === customer.id
+                  ? "border-accent bg-accent/5"
+                  : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950"
+              }`}
+            >
+              <div className="flex items-start gap-3">
+                <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-base text-sm font-black text-white dark:bg-white dark:text-base">
+                  {initials(customer.name)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-black text-slate-950 dark:text-white">{customer.name}</p>
+                    <Badge tone={statusMeta[customer.status].tone}>{statusMeta[customer.status].label}</Badge>
+                  </div>
+                  <p className="mt-1 truncate text-xs text-slate-500">{customer.email}</p>
+                  <p className="mt-1 text-xs text-slate-500">{customer.phone}</p>
+                </div>
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <Info label="الشريحة" value={customer.segment} />
+                <Info label="الإنفاق" value={money(customer.totalSpent)} />
+                <Info label="الطلبات" value={customer.orders} />
+                <Info label="آخر نشاط" value={customer.lastSeen} />
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Badge tone={statusTone(customer.tier)}>{tierLabel(customer.tier)}</Badge>
+                {customer.tags.slice(0, 2).map((tag) => (
+                  <Badge key={tag} tone="neutral">{categoryLabel(tag) || tag}</Badge>
+                ))}
+              </div>
+            </button>
+          )}
         />
       </div>
 

@@ -1,4 +1,4 @@
-import { Monitor, Moon, ShoppingCart, Store, Sun } from "lucide-react";
+import { CreditCard, LayoutDashboard, Monitor, Moon, ShoppingCart, Store, Sun } from "lucide-react";
 import { useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import Button from "../components/Button";
@@ -13,6 +13,13 @@ const links = [
   { to: "/cart", label: "السلة" },
   { to: "/checkout", label: "الدفع" },
   { to: "/admin", label: "لوحة الإدارة" },
+];
+
+const mobileLinks = [
+  { to: "/", label: "المتجر", icon: Store, end: true },
+  { to: "/cart", label: "السلة", icon: ShoppingCart },
+  { to: "/checkout", label: "الدفع", icon: CreditCard },
+  { to: "/admin", label: "التحكم", icon: LayoutDashboard },
 ];
 
 export default function StoreLayout() {
@@ -82,13 +89,42 @@ export default function StoreLayout() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-7xl px-3 py-5 sm:px-6 lg:py-8">
+      <main className="mx-auto max-w-7xl px-3 py-5 pb-24 sm:px-6 md:pb-5 lg:py-8">
         <div className="animate-[fadeIn_.2s_ease-out]">
           <Outlet />
         </div>
       </main>
 
-      <footer className="mt-10 border-t border-slate-200/80 bg-white/70 dark:border-slate-800 dark:bg-slate-950/70">
+      <nav className="fixed inset-x-3 bottom-3 z-40 grid grid-cols-4 rounded-3xl border border-slate-200 bg-white/95 p-2 shadow-2xl shadow-slate-900/15 backdrop-blur-xl md:hidden dark:border-slate-800 dark:bg-slate-950/95">
+        {mobileLinks.map((link) => {
+          const Icon = link.icon;
+          return (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              end={link.end}
+              className={({ isActive }) =>
+                `relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[11px] font-black transition ${
+                  isActive ? "text-white" : "text-slate-500 dark:text-slate-300"
+                }`
+              }
+              style={({ isActive }) => (isActive ? { background: activeTheme.primary } : undefined)}
+            >
+              <span className="relative">
+                <Icon size={18} />
+                {link.to === "/cart" && count > 0 ? (
+                  <span className="absolute -left-2 -top-2 grid h-4 min-w-4 place-items-center rounded-full bg-danger px-1 text-[10px] text-white">
+                    {count}
+                  </span>
+                ) : null}
+              </span>
+              <span className="truncate">{link.label}</span>
+            </NavLink>
+          );
+        })}
+      </nav>
+
+      <footer className="mt-10 hidden border-t border-slate-200/80 bg-white/70 dark:border-slate-800 dark:bg-slate-950/70 md:block">
         <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 sm:px-6 md:grid-cols-[1.2fr_1fr_1fr]">
           <div>
             <div className="flex items-center gap-3">

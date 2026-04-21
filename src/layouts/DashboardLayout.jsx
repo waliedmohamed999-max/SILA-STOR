@@ -14,7 +14,7 @@ export default function DashboardLayout() {
       <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
       <div className={`transition-all duration-300 ${collapsed ? "lg:pr-20" : "lg:pr-60"}`}>
         <Header onMenu={() => setMobileOpen(true)} onCart={() => setCartOpen(true)} />
-        <main className="p-4 sm:p-6">
+        <main className="p-3 pb-24 sm:p-6">
           <div className="animate-[fadeIn_.2s_ease-out]">
             <Outlet />
           </div>

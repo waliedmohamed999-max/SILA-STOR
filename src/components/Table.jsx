@@ -1,9 +1,18 @@
 import { ChevronDown } from "lucide-react";
 
-export default function Table({ columns, rows, sort, onSort, renderRow }) {
+export default function Table({ columns, rows, sort, onSort, renderRow, renderMobileCard }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-      <div className="overflow-x-auto">
+      {renderMobileCard && (
+        <div className="grid gap-3 p-3 lg:hidden">
+          {rows.length ? rows.map(renderMobileCard) : (
+            <div className="rounded-2xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-500 dark:bg-slate-900">
+              لا توجد بيانات مطابقة.
+            </div>
+          )}
+        </div>
+      )}
+      <div className={`overflow-x-auto ${renderMobileCard ? "hidden lg:block" : ""}`}>
         <table className="w-full min-w-[840px] text-right text-sm">
           <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:bg-slate-900/80 dark:text-slate-400">
             <tr>

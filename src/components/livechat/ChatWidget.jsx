@@ -26,7 +26,7 @@ export default function ChatWidget() {
           whileHover={{ scale: 1.04 }}
           whileTap={{ scale: 0.98 }}
           onClick={open}
-          className="fixed bottom-5 left-5 z-50 flex items-center gap-3 rounded-3xl bg-slate-950 px-4 py-3 text-white shadow-2xl shadow-slate-900/25 dark:bg-white dark:text-slate-950"
+          className="fixed bottom-24 left-4 z-50 flex items-center gap-3 rounded-3xl bg-slate-950 px-3 py-3 text-white shadow-2xl shadow-slate-900/25 dark:bg-white dark:text-slate-950 sm:bottom-5 sm:left-5 sm:px-4"
           dir="rtl"
         >
           <span className="relative grid h-12 w-12 place-items-center rounded-2xl bg-accent text-white shadow-lg shadow-indigo-500/35">

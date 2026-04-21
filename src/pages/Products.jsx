@@ -769,7 +769,7 @@ export default function Products() {
       <div className="grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="card h-fit p-3">
           <p className="px-2 pb-3 text-sm font-black text-slate-950 dark:text-white">أقسام المنتجات</p>
-          <nav className="space-y-1">
+          <nav className="flex gap-2 overflow-x-auto pb-1 xl:block xl:space-y-1 xl:overflow-visible xl:pb-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {sectionItems.map((item) => {
               const Icon = item.icon;
               const target = item.slug ? `/admin/products/${item.slug}` : "/admin/products";
@@ -779,7 +779,7 @@ export default function Products() {
                   to={target}
                   end={item.exact}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-bold transition ${
+                    `flex shrink-0 items-center gap-3 rounded-2xl px-3 py-3 text-sm font-bold transition xl:w-full ${
                       isActive
                         ? "bg-accent text-white shadow-lg shadow-indigo-500/20"
                         : "text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white"
@@ -792,7 +792,7 @@ export default function Products() {
               );
             })}
           </nav>
-          <div className="mt-4 rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-4">
+          <div className="mt-4 hidden rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-4 xl:block">
             <p className="text-sm font-black text-slate-950 dark:text-white">ربط مباشر بين الأقسام</p>
             <p className="mt-2 text-xs leading-6 text-slate-500">
               التصنيفات تتحكم في الحقول والمكتبات. الحركات تضبط المخزون. معايير التصفية تقرأ من الحقول والاختيارات
@@ -1109,6 +1109,57 @@ function CatalogSection({ items, categoriesList, onEdit, onPreview, onDuplicate,
                 </div>
               </td>
             </tr>
+          )}
+          renderMobileCard={(product) => (
+            <article key={product.id} className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+              <div className="flex gap-3">
+                <img src={product.image} alt={product.name} className="h-20 w-20 shrink-0 rounded-2xl object-cover" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="line-clamp-2 font-black text-slate-950 dark:text-white">{product.name}</p>
+                      <p className="mt-1 truncate text-xs text-slate-500">{product.brand} · {product.sku}</p>
+                    </div>
+                    <Badge tone={publishTones[product.status]}>{publishLabels[product.status]}</Badge>
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <Badge tone={statusTone(stockState(product))}>
+                      {statusLabel(stockState(product))}: {product.stock}
+                    </Badge>
+                    <Badge tone="neutral">{categoryLabel(product.category)}</Badge>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <Info label="السعر" value={money(product.price)} />
+                <Info label="التكلفة" value={money(product.cost)} />
+                <Info label="حد التنبيه" value={product.threshold} />
+                <Info label="الظهور" value={product.visibility === "public" ? "ظاهر" : "مخفي"} />
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <Button variant="secondary" size="sm" onClick={() => onPreview(product)}>
+                  <Eye size={15} />
+                  معاينة
+                </Button>
+                <Button variant="secondary" size="sm" onClick={() => onEdit(product)}>
+                  <Edit3 size={15} />
+                  تعديل
+                </Button>
+                <Button variant="secondary" size="sm" onClick={() => onDuplicate(product)}>
+                  <Copy size={15} />
+                  نسخ
+                </Button>
+                <Button size="sm" onClick={() => onTogglePublish(product)}>
+                  {product.status === "published" ? "إلغاء النشر" : "نشر"}
+                </Button>
+                <Button variant="danger" size="sm" onClick={() => onDelete(product)} className="col-span-2">
+                  <Trash2 size={15} />
+                  حذف
+                </Button>
+              </div>
+            </article>
           )}
         />
       ) : (

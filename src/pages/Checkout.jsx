@@ -136,10 +136,10 @@ export default function Checkout() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-6 xl:grid-cols-[1fr_400px]">
-      <section className="space-y-6">
-        <div className="card p-6">
-          <div className="flex items-start justify-between gap-4">
+    <form onSubmit={handleSubmit} className="grid gap-4 sm:gap-6 xl:grid-cols-[1fr_400px]">
+      <section className="order-2 space-y-4 sm:space-y-6 xl:order-1">
+        <div className="card p-4 sm:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h1 className="font-heading text-2xl font-black text-slate-950 dark:text-white">إتمام الطلب</h1>
               <p className="mt-1 text-sm text-slate-500">أدخل بيانات العميل والشحن والدفع لإرسال الطلب مباشرة إلى نظام سيلا.</p>
@@ -151,7 +151,7 @@ export default function Checkout() {
           </div>
         </div>
 
-        <div className="card p-6">
+        <div className="card p-4 sm:p-6">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent/10 text-accent">
               <MapPin size={20} />
@@ -183,7 +183,7 @@ export default function Checkout() {
           </div>
         </div>
 
-        <div className="card p-6">
+        <div className="card p-4 sm:p-6">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-500">
               <Truck size={20} />
@@ -208,7 +208,7 @@ export default function Checkout() {
           </div>
         </div>
 
-        <div className="card p-6">
+        <div className="card p-4 sm:p-6">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500">
               <CreditCard size={20} />
@@ -233,8 +233,8 @@ export default function Checkout() {
         </div>
       </section>
 
-      <aside className="space-y-6 xl:sticky xl:top-24 xl:self-start">
-        <div className="card p-5">
+      <aside className="order-1 space-y-4 sm:space-y-6 xl:order-2 xl:sticky xl:top-24 xl:self-start">
+        <div className="card p-4 sm:p-5">
           <h2 className="font-heading text-xl font-black text-slate-950 dark:text-white">ملخص الطلب</h2>
           <div className="mt-5 space-y-4">
             {items.map((item) => (
@@ -249,7 +249,7 @@ export default function Checkout() {
             ))}
           </div>
 
-          <div className="mt-5 flex gap-2">
+          <div className="mt-5 grid gap-2 min-[420px]:flex">
             <input
               value={code}
               onChange={(event) => setCode(event.target.value)}
@@ -276,7 +276,7 @@ export default function Checkout() {
           </div>
         </div>
 
-        <div className="card p-5">
+        <div className="card p-4 sm:p-5">
           <h2 className="font-heading text-lg font-black text-slate-950 dark:text-white">جاهزية التنفيذ</h2>
           <div className="mt-4 space-y-4">
             <StatusLine label="بيانات العميل" done={Boolean(checkoutForm.firstName && checkoutForm.lastName && checkoutForm.email && checkoutForm.phone)} />
