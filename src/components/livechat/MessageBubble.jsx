@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCheck, Clock, RotateCcw } from "lucide-react";
+import { AlertCircle, CheckCheck, Clock, FileText, RotateCcw } from "lucide-react";
 
 export default function MessageBubble({ message, onRetry }) {
   const isCustomer = message.sender === "customer";
@@ -6,37 +6,38 @@ export default function MessageBubble({ message, onRetry }) {
 
   if (isSystem) {
     return (
-      <div className="mx-auto max-w-[86%] rounded-full bg-slate-100 px-4 py-2 text-center text-xs font-bold text-slate-500 dark:bg-slate-900">
+      <div className="mx-auto max-w-[86%] rounded-full bg-[#e1f3fb] px-4 py-2 text-center text-xs font-bold text-slate-600 shadow-sm dark:bg-slate-800 dark:text-slate-300">
         {message.text}
       </div>
     );
   }
 
   return (
-    <div className={`flex ${isCustomer ? "justify-start" : "justify-end"}`}>
+    <div className={`flex ${isCustomer ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[84%] rounded-2xl px-4 py-3 shadow-sm ${
+        className={`relative max-w-[82%] px-3 py-2 shadow-sm ${
           isCustomer
-            ? "rounded-bl-md bg-accent text-white shadow-indigo-500/20"
-            : "rounded-br-md border border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-950 dark:text-white"
+            ? "rounded-[18px] rounded-tr-sm bg-[#dcf8c6] text-slate-950 shadow-emerald-900/10 after:absolute after:right-[-7px] after:top-0 after:h-3 after:w-3 after:bg-[#dcf8c6] after:[clip-path:polygon(0_0,100%_0,0_100%)]"
+            : "rounded-[18px] rounded-tl-sm bg-white text-slate-950 after:absolute after:left-[-7px] after:top-0 after:h-3 after:w-3 after:bg-white after:[clip-path:polygon(0_0,100%_0,100%_100%)] dark:bg-slate-900 dark:text-white dark:after:bg-slate-900"
         }`}
       >
         <p className="whitespace-pre-wrap text-sm leading-6">{message.text}</p>
         {!!message.attachments?.length && (
           <div className="mt-2 grid gap-1">
             {message.attachments.map((file) => (
-              <span key={file.id} className="rounded-xl bg-white/15 px-2 py-1 text-xs font-bold">
+              <span key={file.id} className={`inline-flex items-center gap-2 rounded-xl px-2 py-1 text-xs font-bold ${isCustomer ? "bg-emerald-600/10 text-emerald-900" : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"}`}>
+                <FileText size={13} />
                 {file.name}
               </span>
             ))}
           </div>
         )}
-        <div className={`mt-2 flex items-center gap-1 text-[10px] ${isCustomer ? "text-white/75" : "text-slate-400"}`}>
+        <div className={`mt-1 flex items-center justify-end gap-1 text-[10px] ${isCustomer ? "text-emerald-900/55" : "text-slate-400"}`}>
           <span>{formatTime(message.createdAt)}</span>
           {message.status === "sending" && <Clock size={12} />}
-          {message.status === "sent" && isCustomer && <CheckCheck size={12} />}
+          {message.status === "sent" && isCustomer && <CheckCheck size={13} className="text-[#34b7f1]" />}
           {message.status === "failed" && (
-            <button type="button" onClick={() => onRetry(message)} className="inline-flex items-center gap-1 text-red-200">
+            <button type="button" onClick={() => onRetry(message)} className="inline-flex items-center gap-1 text-red-500">
               <AlertCircle size={12} />
               إعادة
               <RotateCcw size={11} />
