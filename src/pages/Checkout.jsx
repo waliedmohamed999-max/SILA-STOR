@@ -82,7 +82,7 @@ export default function Checkout() {
     if (processing) return;
     setProcessing(true);
     try {
-      const order = createOrder();
+      const order = await createOrder();
       if (!order) return;
       const enrichedOrder = {
         ...order,

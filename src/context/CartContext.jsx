@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { markCurrentCartConverted, upsertAbandonedCart } from "../services/abandonedCartService";
+import { createBackendOrder } from "../services/storeBackendService";
 import { useToast } from "./ToastContext";
 
 const CartContext = createContext(null);
@@ -136,7 +137,7 @@ export function CartProvider({ children }) {
 
   const resetCheckoutForm = () => setCheckoutForm(initialCheckoutForm);
 
-  const createOrder = () => {
+  const createOrder = async () => {
     if (!items.length) {
       showToast("السلة فارغة", "أضف منتجًا واحدًا على الأقل قبل الدفع.", "error");
       return null;
@@ -174,13 +175,20 @@ export function CartProvider({ children }) {
       status: "pending",
     };
 
-    setOrders((current) => [order, ...current]);
-    markCurrentCartConverted(order.id);
+    let persistedOrder = order;
+    try {
+      persistedOrder = await createBackendOrder(order);
+    } catch {
+      persistedOrder = order;
+    }
+
+    setOrders((current) => [persistedOrder, ...current]);
+    markCurrentCartConverted(persistedOrder.id);
     clearCart();
     setDiscount({ code: "", rate: 0 });
     if (!checkoutForm.saveInfo) resetCheckoutForm();
-    showToast("تم إنشاء الطلب", `تم إنشاء الطلب ${order.id} بنجاح.`, "success");
-    return order;
+    showToast("تم إنشاء الطلب", `تم إنشاء الطلب ${persistedOrder.id} بنجاح.`, "success");
+    return persistedOrder;
   };
 
   const value = useMemo(

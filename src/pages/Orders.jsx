@@ -24,6 +24,7 @@ import Table from "../components/Table";
 import { useToast } from "../context/ToastContext";
 import { orders as seedOrders, orderStatuses, paymentMethods } from "../data/orders";
 import { products } from "../data/products";
+import { fetchOrders, updateBackendOrderStatus } from "../services/storeBackendService";
 import { money, sortBy, statusTone } from "../utils/formatters";
 import { paymentLabel, statusLabel, tierLabel } from "../utils/labels";
 
@@ -61,6 +62,18 @@ export default function Orders() {
   const navigate = useNavigate();
   const location = useLocation();
   const { showToast } = useToast();
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchOrders()
+      .then((rows) => {
+        if (!cancelled && rows.length) setOrders(rows);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!location.state?.createdOrder) return;
@@ -177,6 +190,7 @@ export default function Orders() {
           }
         : current,
     );
+    updateBackendOrderStatus(orderId, nextStatus).catch(() => {});
     showToast("تم تحديث الطلب", `تم تغيير حالة الطلب إلى ${statusLabel(nextStatus)}.`, "success");
   };
 

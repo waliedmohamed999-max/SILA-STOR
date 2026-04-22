@@ -4,6 +4,7 @@ dist/
 .env.*
 !.env.example
 *.log
+api/config.local.php
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

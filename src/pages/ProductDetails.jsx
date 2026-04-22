@@ -1,22 +1,39 @@
 import { ArrowLeft, CheckCircle2, Minus, Plus, ShieldCheck, ShoppingCart, Star, TimerReset, Truck } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Badge from "../components/Badge";
 import Button from "../components/Button";
 import EmptyState from "../components/EmptyState";
 import ProgressBar from "../components/ProgressBar";
 import { useCart } from "../context/CartContext";
-import { products } from "../data/products";
+import { products as fallbackProducts } from "../data/products";
+import { fetchProducts } from "../services/catalogService";
 import { money, statusTone, stockState } from "../utils/formatters";
 import { categoryLabel, statusLabel } from "../utils/labels";
 
 export default function ProductDetails() {
   const { productId } = useParams();
   const { addItem } = useCart();
+  const [products, setProducts] = useState(fallbackProducts);
   const product = products.find((item) => String(item.id) === productId);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("details");
   const [selectedImage, setSelectedImage] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchProducts()
+      .then((items) => {
+        if (!cancelled) setProducts(items);
+      })
+      .catch(() => {
+        if (!cancelled) setProducts(fallbackProducts);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const related = useMemo(
     () => (product ? products.filter((item) => item.category === product.category && item.id !== product.id).slice(0, 4) : []),
     [product]

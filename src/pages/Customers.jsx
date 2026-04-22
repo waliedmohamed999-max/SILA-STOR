@@ -9,6 +9,7 @@ import Table from "../components/Table";
 import { useToast } from "../context/ToastContext";
 import { customers as seedCustomers } from "../data/customers";
 import { orders } from "../data/orders";
+import { fetchCustomers, saveCustomer as saveBackendCustomer } from "../services/storeBackendService";
 import { initials, money, sortBy, statusTone } from "../utils/formatters";
 import { categoryLabel, tierLabel } from "../utils/labels";
 
@@ -62,6 +63,21 @@ export default function Customers() {
   const [note, setNote] = useState("");
   const { showToast } = useToast();
 
+  useEffect(() => {
+    let cancelled = false;
+    fetchCustomers()
+      .then((rows) => {
+        if (!cancelled && rows.length) {
+          setItems(rows);
+          setSelected(rows[0]);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const filtered = useMemo(() => {
     const list = items.filter((customer) => {
       const haystack = [customer.name, customer.email, customer.phone, customer.city, customer.segment, customer.tags.join(" ")].join(" ").toLowerCase();
@@ -80,20 +96,27 @@ export default function Customers() {
 
   const toggleSort = (key) => setSort((current) => ({ key, direction: current.key === key && current.direction === "asc" ? "desc" : "asc" }));
 
-  const saveCustomer = (customer) => {
+  const saveCustomer = async (customer) => {
     if (!customer.name.trim() || !customer.email.trim()) {
       showToast("بيانات ناقصة", "اسم العميل والبريد الإلكتروني مطلوبان.", "error");
       return;
     }
 
+    let persisted = customer;
+    try {
+      persisted = await saveBackendCustomer(customer);
+    } catch {
+      persisted = customer;
+    }
+
     setItems((current) => {
       if (customer.id) {
-        return current.map((item) => (item.id === customer.id ? customer : item));
+        return current.map((item) => (item.id === customer.id ? persisted : item));
       }
       const nextId = current.reduce((max, item) => Math.max(max, item.id), 0) + 1;
-      return [{ ...customer, id: nextId }, ...current];
+      return [{ ...persisted, id: persisted.id || nextId }, ...current];
     });
-    setSelected(customer.id ? customer : { ...customer, id: items.length + 1 });
+    setSelected(persisted.id ? persisted : { ...persisted, id: items.length + 1 });
     setEditing(null);
     showToast("تم حفظ العميل", "تم تحديث ملف العميل داخل نظام CRM.", "success");
   };

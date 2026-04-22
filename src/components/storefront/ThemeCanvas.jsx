@@ -20,7 +20,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import Badge from "../Badge";
 import EmptyState from "../EmptyState";
-import { categories, products } from "../../data/products";
+import { products as fallbackProducts } from "../../data/products";
+import { fetchProducts, getCategories } from "../../services/catalogService";
 import { money, statusTone, stockState } from "../../utils/formatters";
 import { categoryLabel, statusLabel } from "../../utils/labels";
 
@@ -71,9 +72,26 @@ export default function ThemeCanvas({ theme, preview = false, addItem = () => {}
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All");
   const [sort, setSort] = useState("featured");
+  const [products, setProducts] = useState(fallbackProducts);
   const variant = getThemeVariant(theme);
+  const categories = useMemo(() => getCategories(products), [products]);
 
-  const featuredProducts = useMemo(() => [...products].sort((a, b) => b.sales - a.sales), []);
+  useEffect(() => {
+    if (preview) return;
+    let cancelled = false;
+    fetchProducts()
+      .then((items) => {
+        if (!cancelled) setProducts(items);
+      })
+      .catch(() => {
+        if (!cancelled) setProducts(fallbackProducts);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [preview]);
+
+  const featuredProducts = useMemo(() => [...products].sort((a, b) => b.sales - a.sales), [products]);
 
   const filteredCatalog = useMemo(() => {
     let list = products.filter((product) => {
@@ -120,6 +138,8 @@ export default function ThemeCanvas({ theme, preview = false, addItem = () => {}
             setSort,
             filteredCatalog,
             featuredProducts,
+            products,
+            categories,
             variant,
           })}
         </SectionShell>
@@ -144,7 +164,7 @@ function renderSection(props) {
   return null;
 }
 
-function CategorySection({ section, theme, category, setCategory, variant }) {
+function CategorySection({ section, theme, category, setCategory, products, categories, variant }) {
   const sectionCategories = section.categories?.length ? section.categories : categories;
   const gridClass =
     variant === "marketplace"
@@ -165,6 +185,7 @@ function CategorySection({ section, theme, category, setCategory, variant }) {
             selected={category === item}
             setCategory={setCategory}
             theme={theme}
+            products={products}
             variant={variant}
           />
         ))}
@@ -173,7 +194,7 @@ function CategorySection({ section, theme, category, setCategory, variant }) {
   );
 }
 
-function CategoryCard({ item, index, selected, setCategory, theme, variant }) {
+function CategoryCard({ item, index, selected, setCategory, theme, products, variant }) {
   const visual = categoryVisuals[item] || categoryVisuals.Accessories;
   if (variant === "tech") {
     return (
@@ -266,7 +287,7 @@ function FeaturedProducts({ section, theme, preview, addItem, featuredProducts, 
   );
 }
 
-function CatalogSection({ section, theme, preview, addItem, query, setQuery, category, setCategory, sort, setSort, filteredCatalog, variant }) {
+function CatalogSection({ section, theme, preview, addItem, query, setQuery, category, setCategory, sort, setSort, filteredCatalog, categories, variant }) {
   const dense = variant === "marketplace";
   return (
     <section id="catalog" className={dense ? "rounded-3xl border border-slate-200 bg-white p-3 shadow-sm sm:p-5" : "space-y-4"}>
@@ -889,6 +910,6 @@ function getHeroSlides(section, theme) {
 
 function pickFeaturedProducts(section, source) {
   if (!section.productIds?.length) return source.slice(0, section.limit || 8);
-  const selected = section.productIds.map((id) => products.find((product) => product.id === id)).filter(Boolean);
+  const selected = section.productIds.map((id) => source.find((product) => product.id === id)).filter(Boolean);
   return selected.length ? selected : source.slice(0, section.limit || 8);
 }
