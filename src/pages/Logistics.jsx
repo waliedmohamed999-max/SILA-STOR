@@ -29,6 +29,9 @@ import { useSettings } from "../context/SettingsContext";
 import { useToast } from "../context/ToastContext";
 import { orders } from "../data/orders";
 import { money } from "../utils/formatters";
+import { zeroOrderMetrics } from "../utils/zeroDataMetrics";
+
+const logisticsOrders = orders.map(zeroOrderMetrics);
 
 const logisticsTabs = [
   { path: "/admin/logistics", label: "طرق الشحن", icon: Truck, end: true },
@@ -447,7 +450,7 @@ function TrackingShipments() {
   const [query, setQuery] = useState("");
   const shipments = useMemo(
     () =>
-      orders.map((order) => ({
+      logisticsOrders.map((order) => ({
         id: order.shipmentNumber,
         orderId: order.id,
         customer: order.customer,
@@ -512,7 +515,7 @@ function TrackingShipments() {
 
 function ShipmentDetails() {
   const { shipmentId } = useParams();
-  const order = orders.find((item) => item.shipmentNumber === shipmentId);
+  const order = logisticsOrders.find((item) => item.shipmentNumber === shipmentId);
 
   if (!order) {
     return (
@@ -593,11 +596,11 @@ function ShipmentDetails() {
 function CreateLabel() {
   const { settings } = useSettings();
   const { showToast } = useToast();
-  const [orderId, setOrderId] = useState(orders[0]?.id || "");
+  const [orderId, setOrderId] = useState(logisticsOrders[0]?.id || "");
   const [weight, setWeight] = useState("1.5");
   const [dimensions, setDimensions] = useState("30x20x12");
   const [packageCount, setPackageCount] = useState("1");
-  const selectedOrder = orders.find((order) => order.id === orderId) || orders[0];
+  const selectedOrder = logisticsOrders.find((order) => order.id === orderId) || logisticsOrders[0];
   const providers = settings.shipping?.providers || [];
   const [providerId, setProviderId] = useState(providers[0]?.id || "");
   const provider = providers.find((item) => item.id === providerId) || providers[0];
@@ -611,7 +614,7 @@ function CreateLabel() {
           <h2 className="font-heading text-2xl font-black text-slate-950 dark:text-white">إنشاء بوليصة شحن</h2>
           <p className="mt-1 text-sm text-slate-500">اختر الطلب، شركة الشحن، وبيانات الطرد ثم أنشئ بوليصة جاهزة للطباعة.</p>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <SelectField label="الطلب" value={orderId} options={orders.slice(0, 20).map((order) => order.id)} onChange={setOrderId} />
+            <SelectField label="الطلب" value={orderId} options={logisticsOrders.slice(0, 20).map((order) => order.id)} onChange={setOrderId} />
             <SelectField label="شركة الشحن" value={providerId} options={providers.map((item) => item.id)} onChange={setProviderId} />
             <Field label="الوزن بالكيلو" value={weight} onChange={setWeight} />
             <Field label="الأبعاد" value={dimensions} onChange={setDimensions} />
@@ -651,7 +654,7 @@ function CreateLabel() {
 function OperationLog() {
   const rows = useMemo(
     () =>
-      orders.slice(0, 24).map((order, index) => ({
+      logisticsOrders.slice(0, 24).map((order, index) => ({
         id: `LOG-${index + 1000}`,
         time: new Date(order.createdAt).toLocaleString("ar-SA"),
         orderId: order.id,

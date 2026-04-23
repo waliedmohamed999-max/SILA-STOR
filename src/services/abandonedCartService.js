@@ -30,8 +30,8 @@ export function upsertAbandonedCart({ items, checkoutForm, subtotal, total, disc
   const itemSnapshot = items.map((item) => ({
     id: item.id,
     name: item.name,
-    price: Number(item.price || 0),
-    quantity: Number(item.quantity || 1),
+    price: 0,
+    quantity: 0,
     image: item.image,
   }));
 
@@ -42,9 +42,9 @@ export function upsertAbandonedCart({ items, checkoutForm, subtotal, total, disc
     source,
     customer,
     items: itemSnapshot,
-    itemsCount: itemSnapshot.reduce((sum, item) => sum + item.quantity, 0),
-    subtotal: Number(subtotal || 0),
-    total: Number(total || 0),
+    itemsCount: 0,
+    subtotal: 0,
+    total: 0,
     discountCode: discount?.code || "",
     firstSeenAt: existing?.firstSeenAt || now,
     lastActivityAt: now,

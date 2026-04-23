@@ -7,6 +7,7 @@ import { orders as seedOrders, orderStatuses, paymentMethods } from "../data/ord
 import { products } from "../data/products";
 import { money } from "../utils/formatters";
 import { paymentLabel, statusLabel } from "../utils/labels";
+import { zeroOrderMetrics, zeroProductMetrics } from "../utils/zeroDataMetrics";
 
 const paymentStatusLabels = {
   paid: "مدفوع",
@@ -18,8 +19,9 @@ const paymentStatusLabels = {
 export default function CreateOrder() {
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const zeroedProducts = useMemo(() => products.map(zeroProductMetrics), []);
   const [form, setForm] = useState(() => createInitialOrderForm());
-  const [selectedProductId, setSelectedProductId] = useState(String(products[0]?.id || ""));
+  const [selectedProductId, setSelectedProductId] = useState(String(zeroedProducts[0]?.id || ""));
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const existingOrders = useMemo(() => mergeStoredOrders(seedOrders), []);
@@ -46,7 +48,7 @@ export default function CreateOrder() {
   };
 
   const addItem = () => {
-    const product = products.find((item) => String(item.id) === String(selectedProductId)) || products[0];
+    const product = zeroedProducts.find((item) => String(item.id) === String(selectedProductId)) || zeroedProducts[0];
     if (!product) return;
     setForm((current) => {
       const exists = current.items.find((item) => item.productId === product.id);
@@ -91,7 +93,7 @@ export default function CreateOrder() {
       const createdAt = new Date(`${form.orderDate}T${new Date().toTimeString().slice(0, 8)}`).toISOString();
       const orderId = nextOrderId(existingOrders);
       const trackingNumber = `SILA-${Date.now().toString().slice(-8)}`;
-      const order = buildOrderObject({ form, totals, createdAt, orderId, trackingNumber });
+      const order = zeroOrderMetrics(buildOrderObject({ form, totals, createdAt, orderId, trackingNumber }));
       persistCreatedOrder(order);
       showToast("تم إنشاء الطلب", `تم إنشاء ${order.id} وإضافته لقائمة الطلبات.`, "success");
       navigate("/admin/orders", { replace: true, state: { createdOrder: order } });
@@ -148,7 +150,7 @@ export default function CreateOrder() {
                 onChange={(event) => setSelectedProductId(event.target.value)}
                 className="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold outline-none focus:border-accent dark:border-slate-800 dark:bg-slate-950 dark:text-white"
               >
-                {products.map((product) => (
+                {zeroedProducts.map((product) => (
                   <option key={product.id} value={product.id}>{product.name}</option>
                 ))}
               </select>
@@ -297,7 +299,7 @@ function buildOrderObject({ form, totals, createdAt, orderId, trackingNumber }) 
 }
 
 function createInitialOrderForm() {
-  const product = products[0];
+  const product = zeroProductMetrics(products[0]);
   return {
     customerName: "",
     customerPhone: "",

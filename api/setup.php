@@ -195,12 +195,12 @@ $stmt = $pdo->prepare('INSERT IGNORE INTO users (name, email, password_hash, rol
 $stmt->execute(['مدير سيلا', 'admin@sila.local', password_hash('Sila@12345', PASSWORD_DEFAULT), 'admin']);
 
 $products = [
-    ['AstraBook Pro 14', 'Laptops', 1899, 4.9, 42, 8, 'LAP-ABP14', 168, 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=900&q=80'],
-    ['Nexus One X', 'Phones', 999, 4.8, 56, 12, 'PHN-NOX', 212, 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80'],
-    ['Pulse Max Headphones', 'Headphones', 349, 4.9, 7, 12, 'AUD-PMX', 189, 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80'],
-    ['FrameShot Z6', 'Cameras', 1499, 4.8, 13, 6, 'CAM-FZ6', 84, 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=900&q=80'],
-    ['SlatePad Ultra', 'Tablets', 1099, 4.8, 29, 9, 'TAB-SPU', 147, 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=900&q=80'],
-    ['MagDock Studio', 'Accessories', 149, 4.7, 94, 18, 'ACC-MDS', 198, 'https://images.unsplash.com/photo-1625842268584-8f3296236761?auto=format&fit=crop&w=900&q=80'],
+    ['AstraBook Pro 14', 'Laptops', 0, 0, 0, 0, 'LAP-ABP14', 0, 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=900&q=80'],
+    ['Nexus One X', 'Phones', 0, 0, 0, 0, 'PHN-NOX', 0, 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80'],
+    ['Pulse Max Headphones', 'Headphones', 0, 0, 0, 0, 'AUD-PMX', 0, 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&q=80'],
+    ['FrameShot Z6', 'Cameras', 0, 0, 0, 0, 'CAM-FZ6', 0, 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=900&q=80'],
+    ['SlatePad Ultra', 'Tablets', 0, 0, 0, 0, 'TAB-SPU', 0, 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?auto=format&fit=crop&w=900&q=80'],
+    ['MagDock Studio', 'Accessories', 0, 0, 0, 0, 'ACC-MDS', 0, 'https://images.unsplash.com/photo-1625842268584-8f3296236761?auto=format&fit=crop&w=900&q=80'],
 ];
 
 $stmt = $pdo->prepare(
@@ -227,10 +227,10 @@ foreach ($categoryImages as $name => $image) {
 
 $customerStmt = $pdo->prepare('INSERT IGNORE INTO customers (name, email, phone, city, address, tier, segment, favorite_category, total_spent, orders_count, status, tags, marketing_consent, notes, acquisition, last_seen) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
 $customers = [
-    ['Omar Khalid', 'omar.khalid@commerce.example', '+966 55 1200', 'الرياض', 'شارع الملك 20', 'Gold', 'عملاء نشطون', 'Phones', 4820, 8, 'active'],
-    ['Maya Chen', 'maya.chen@commerce.example', '+966 55 1237', 'جدة', 'حي الصفا', 'Platinum', 'كبار العملاء', 'Laptops', 9200, 14, 'active'],
-    ['Lina Santos', 'lina.santos@commerce.example', '+966 55 1274', 'دبي', 'Business Bay', 'Silver', 'جدد', 'Accessories', 860, 2, 'new'],
-    ['Yousef Nasser', 'yousef.nasser@commerce.example', '+966 55 1311', 'الدمام', 'حي الخليج', 'Bronze', 'عملاء معرضون للفقد', 'Cameras', 640, 1, 'at-risk'],
+    ['Omar Khalid', 'omar.khalid@commerce.example', '+966 55 1200', 'الرياض', 'شارع الملك 20', 'Gold', 'عملاء نشطون', 'Phones', 0, 0, 'active'],
+    ['Maya Chen', 'maya.chen@commerce.example', '+966 55 1237', 'جدة', 'حي الصفا', 'Platinum', 'كبار العملاء', 'Laptops', 0, 0, 'active'],
+    ['Lina Santos', 'lina.santos@commerce.example', '+966 55 1274', 'دبي', 'Business Bay', 'Silver', 'جدد', 'Accessories', 0, 0, 'new'],
+    ['Yousef Nasser', 'yousef.nasser@commerce.example', '+966 55 1311', 'الدمام', 'حي الخليج', 'Bronze', 'عملاء معرضون للفقد', 'Cameras', 0, 0, 'at-risk'],
 ];
 foreach ($customers as $customer) {
     $customerStmt->execute([...$customer, json_encode([$customer[5], $customer[7]], JSON_UNESCAPED_UNICODE), 1, 'Seed customer', 'زيارة مباشرة', date('Y-m-d')]);
@@ -238,7 +238,14 @@ foreach ($customers as $customer) {
 
 $settingsStmt = $pdo->prepare('INSERT IGNORE INTO settings (section_key, value_json) VALUES (?, ?)');
 $settingsStmt->execute(['store-profile', json_encode(['storeName' => 'سيلا | SILA', 'supportEmail' => 'support@sila.store', 'phone' => '+966 55 800 4400'], JSON_UNESCAPED_UNICODE)]);
-$settingsStmt->execute(['billing', json_encode(['currency' => 'SAR', 'taxRate' => '15', 'orderPrefix' => 'ORD-SILA'], JSON_UNESCAPED_UNICODE)]);
+$settingsStmt->execute(['billing', json_encode(['currency' => 'SAR', 'taxRate' => '0', 'orderPrefix' => 'ORD-SILA'], JSON_UNESCAPED_UNICODE)]);
+
+$pdo->exec('UPDATE products SET price=0, compare_at_price=0, cost=0, rating=0, stock=0, threshold_qty=0, sales=0');
+$pdo->exec('UPDATE customers SET total_spent=0, orders_count=0');
+$pdo->exec('UPDATE orders SET subtotal=0, discount_amount=0, shipping_fee=0, tax=0, total=0');
+$pdo->exec('UPDATE order_items SET unit_price=0, quantity=0, discount=0, tax_rate=0, weight=0');
+$pdo->exec('UPDATE payments SET amount=0');
+$pdo->exec('UPDATE stock_movements SET quantity=0');
 
 header('Content-Type: text/plain; charset=utf-8');
 echo "SILA database is ready.\n";

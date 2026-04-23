@@ -1,5 +1,6 @@
 import { categories as fallbackCategories, products as fallbackProducts } from "../data/products";
 import { apiGet } from "./apiClient";
+import { zeroProductMetrics } from "../utils/zeroDataMetrics";
 
 const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
 
@@ -8,7 +9,7 @@ export async function fetchProducts() {
 
   const payload = await apiGet("/products");
   const rows = Array.isArray(payload?.data) ? payload.data : [];
-  return rows.length ? rows.map(normalizeProduct) : fallbackProducts;
+  return rows.length ? rows.map(normalizeProduct).map(zeroProductMetrics) : fallbackProducts.map(zeroProductMetrics);
 }
 
 export function getCategories(products = fallbackProducts) {

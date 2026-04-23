@@ -15,35 +15,35 @@ const sections = [
 ];
 
 const affiliates = [
-  { id: 1, name: "Tech Arabia", channel: "محتوى تقني", rate: 8, sales: 128, revenue: 84200, commission: 6736, status: "active" },
-  { id: 2, name: "Deal Hunter", channel: "عروض ومنتجات", rate: 10, sales: 94, revenue: 51740, commission: 5174, status: "active" },
-  { id: 3, name: "Studio Market", channel: "إنفلونسر", rate: 6, sales: 51, revenue: 23400, commission: 1404, status: "review" },
+  { id: 1, name: "Tech Arabia", channel: "محتوى تقني", rate: 0, sales: 0, revenue: 0, commission: 0, status: "active" },
+  { id: 2, name: "Deal Hunter", channel: "عروض ومنتجات", rate: 0, sales: 0, revenue: 0, commission: 0, status: "active" },
+  { id: 3, name: "Studio Market", channel: "إنفلونسر", rate: 0, sales: 0, revenue: 0, commission: 0, status: "review" },
 ];
 
 const packages = [
-  { id: 1, name: "حزمة الإطلاق", target: "منتجات جديدة", budget: 12000, channels: ["Meta", "Google", "Email"], roi: 3.8, status: "active" },
-  { id: 2, name: "حزمة العودة للمدرسة", target: "اللابتوبات", budget: 18000, channels: ["Snap", "Influencers", "WhatsApp"], roi: 4.4, status: "scheduled" },
-  { id: 3, name: "حزمة إعادة الاستهداف", target: "السلات المتروكة", budget: 6000, channels: ["Meta", "Email"], roi: 5.1, status: "active" },
+  { id: 1, name: "حزمة الإطلاق", target: "منتجات جديدة", budget: 0, channels: ["Meta", "Google", "Email"], roi: 0, status: "active" },
+  { id: 2, name: "حزمة العودة للمدرسة", target: "اللابتوبات", budget: 0, channels: ["Snap", "Influencers", "WhatsApp"], roi: 0, status: "scheduled" },
+  { id: 3, name: "حزمة إعادة الاستهداف", target: "السلات المتروكة", budget: 0, channels: ["Meta", "Email"], roi: 0, status: "active" },
 ];
 
 const campaigns = [
-  { id: 1, name: "أجهزة الكمبيوتر للأعمال", channel: "Google Ads", spend: 9200, revenue: 31800, ctr: 4.8, progress: 82, status: "active" },
-  { id: 2, name: "موسم السماعات", channel: "Meta Ads", spend: 4100, revenue: 12600, ctr: 5.6, progress: 64, status: "active" },
-  { id: 3, name: "خصومات نهاية الأسبوع", channel: "SMS + Email", spend: 1700, revenue: 9800, ctr: 9.4, progress: 100, status: "finished" },
+  { id: 1, name: "أجهزة الكمبيوتر للأعمال", channel: "Google Ads", spend: 0, revenue: 0, ctr: 0, progress: 0, status: "active" },
+  { id: 2, name: "موسم السماعات", channel: "Meta Ads", spend: 0, revenue: 0, ctr: 0, progress: 0, status: "active" },
+  { id: 3, name: "خصومات نهاية الأسبوع", channel: "SMS + Email", spend: 0, revenue: 0, ctr: 0, progress: 0, status: "finished" },
 ];
 
 const discounts = [
-  { id: 1, code: "SAVE10", type: "نسبة", value: "10%", usage: 124, limit: 300, scope: "كل المتجر", status: "active" },
-  { id: 2, code: "LAPTOP120", type: "قيمة", value: "120", usage: 48, limit: 80, scope: "اللابتوبات", status: "active" },
-  { id: 3, code: "WELCOME15", type: "نسبة", value: "15%", usage: 300, limit: 300, scope: "عملاء جدد", status: "finished" },
+  { id: 1, code: "SAVE10", type: "نسبة", value: "0%", usage: 0, limit: 0, scope: "كل المتجر", status: "active" },
+  { id: 2, code: "LAPTOP120", type: "قيمة", value: "0", usage: 0, limit: 0, scope: "اللابتوبات", status: "active" },
+  { id: 3, code: "WELCOME15", type: "نسبة", value: "0%", usage: 0, limit: 0, scope: "عملاء جدد", status: "finished" },
 ];
 
 export default function Marketing() {
   const [activeSection, setActiveSection] = useState("abandoned");
-  const [abandonedCarts, setAbandonedCarts] = useState(() => readAbandonedCarts());
+  const [abandonedCarts, setAbandonedCarts] = useState(() => zeroAbandonedCarts(readAbandonedCarts()));
 
   useEffect(() => {
-    const refresh = () => setAbandonedCarts(readAbandonedCarts());
+    const refresh = () => setAbandonedCarts(zeroAbandonedCarts(readAbandonedCarts()));
     window.addEventListener("storage", refresh);
     window.addEventListener("sila:abandoned-carts-updated", refresh);
     return () => {
@@ -124,7 +124,7 @@ export default function Marketing() {
           <SummaryCard title="جهات قابلة للاستهداف" value={String(summary.recoverableContacts)} icon={Target} tone="danger" />
         </div>
 
-        {activeSection === "abandoned" && <AbandonedCartsSection carts={abandonedCarts} onRefresh={() => setAbandonedCarts(readAbandonedCarts())} />}
+        {activeSection === "abandoned" && <AbandonedCartsSection carts={abandonedCarts} onRefresh={() => setAbandonedCarts(zeroAbandonedCarts(readAbandonedCarts()))} />}
         {activeSection === "affiliate" && <AffiliateSection />}
         {activeSection === "packages" && <PackagesSection />}
         {activeSection === "campaigns" && <CampaignsSection />}
@@ -132,6 +132,16 @@ export default function Marketing() {
       </section>
     </div>
   );
+}
+
+function zeroAbandonedCarts(carts) {
+  return carts.map((cart) => ({
+    ...cart,
+    items: (cart.items || []).map((item) => ({ ...item, price: 0, quantity: 0 })),
+    itemsCount: 0,
+    subtotal: 0,
+    total: 0,
+  }));
 }
 
 function AbandonedCartsSection({ carts, onRefresh }) {
@@ -200,7 +210,7 @@ function AbandonedCartsSection({ carts, onRefresh }) {
                 </div>
 
                 <Metric label="قيمة السلة" value={money(cart.total || cart.subtotal || 0)} />
-                <Metric label="عدد المنتجات" value={String(cart.itemsCount || cart.items?.length || 0)} />
+                <Metric label="عدد المنتجات" value={String(cart.itemsCount || 0)} />
 
                 <div className="grid gap-2">
                   {cart.customer?.phone ? (
@@ -393,7 +403,7 @@ function DiscountsSection() {
               <Metric label="الاستخدام" value={`${item.usage}/${item.limit}`} />
               <div className="text-right">
                 <p className="text-xs font-bold text-slate-500">الأداء</p>
-                <p className="mt-1 font-heading text-lg font-black text-slate-950 dark:text-white">{Math.round((item.usage / item.limit) * 100)}%</p>
+                <p className="mt-1 font-heading text-lg font-black text-slate-950 dark:text-white">0%</p>
               </div>
             </div>
           </div>
@@ -461,3 +471,4 @@ function Metric({ label, value }) {
     </div>
   );
 }
+

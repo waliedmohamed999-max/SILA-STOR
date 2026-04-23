@@ -11,18 +11,19 @@ import { useToast } from "../context/ToastContext";
 import { products } from "../data/products";
 import { money, sortBy, statusTone, stockState } from "../utils/formatters";
 import { categoryLabel, statusLabel } from "../utils/labels";
+import { zeroProductMetrics } from "../utils/zeroDataMetrics";
 
 const warehouses = ["المخزن الرئيسي", "مخزن الرياض", "مخزن جدة", "مخزن المرتجعات"];
 const reasons = ["توريد", "بيع", "تسوية", "مرتجع", "تالف", "تحويل"];
 
-const inventorySeed = products.map((product, index) => ({
+const inventorySeed = products.map(zeroProductMetrics).map((product, index) => ({
   ...product,
-  reserved: (index * 3) % 9,
-  incoming: index % 4 === 0 ? 20 + index : index % 5 === 0 ? 8 : 0,
+  reserved: 0,
+  incoming: 0,
   warehouse: warehouses[index % warehouses.length],
   bin: `R${(index % 6) + 1}-S${(index % 8) + 1}`,
   supplier: ["TechBridge", "Nova Supply", "Gulf Devices", "SILA Direct"][index % 4],
-  reorderQty: Math.max(10, product.threshold * 3),
+  reorderQty: 0,
   lastMovement: `2026-04-${String(20 - (index % 18)).padStart(2, "0")}`,
 }));
 
@@ -31,7 +32,7 @@ const movementsSeed = inventorySeed.slice(0, 9).map((product, index) => ({
   productId: product.id,
   product: product.name,
   type: ["توريد", "بيع", "تسوية", "مرتجع", "تحويل"][index % 5],
-  quantity: [18, -4, 3, 2, -7][index % 5],
+  quantity: 0,
   warehouse: product.warehouse,
   date: `2026-04-${String(20 - index).padStart(2, "0")}`,
   user: ["مدير المخزون", "فريق الشحن", "مشرف المتجر"][index % 3],

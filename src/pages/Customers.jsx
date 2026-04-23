@@ -12,11 +12,12 @@ import { orders } from "../data/orders";
 import { fetchCustomers, saveCustomer as saveBackendCustomer } from "../services/storeBackendService";
 import { initials, money, sortBy, statusTone } from "../utils/formatters";
 import { categoryLabel, tierLabel } from "../utils/labels";
+import { zeroCustomerMetrics, zeroOrderMetrics } from "../utils/zeroDataMetrics";
 
 const segments = ["الكل", "كبار العملاء", "عملاء نشطون", "عملاء معرضون للفقد", "جدد"];
 const channels = ["البريد", "الهاتف", "واتساب", "رسائل SMS"];
 
-const crmCustomersSeed = seedCustomers.map((customer, index) => ({
+const crmCustomersSeed = seedCustomers.map(zeroCustomerMetrics).map((customer, index) => ({
   ...customer,
   status: index % 8 === 0 ? "at-risk" : index % 5 === 0 ? "new" : "active",
   segment: index % 6 === 0 ? "كبار العملاء" : index % 5 === 0 ? "جدد" : index % 4 === 0 ? "عملاء معرضون للفقد" : "عملاء نشطون",
@@ -86,7 +87,7 @@ export default function Customers() {
     return sortBy(list, sort);
   }, [items, query, segment, sort]);
 
-  const recent = orders.filter((order) => order.customerId === selected?.id).slice(0, 5);
+  const recent = orders.map(zeroOrderMetrics).filter((order) => order.customerId === selected?.id).slice(0, 5);
   const stats = {
     total: items.length,
     vip: items.filter((customer) => customer.segment === "كبار العملاء").length,
@@ -276,7 +277,7 @@ export default function Customers() {
 
           <h3 className="mt-6 font-heading font-black text-slate-950 dark:text-white">أحدث الطلبات</h3>
           <div className="mt-3 space-y-2">
-            {(recent.length ? recent : orders.slice(0, 3)).map((order) => (
+            {(recent.length ? recent : orders.map(zeroOrderMetrics).slice(0, 3)).map((order) => (
               <div key={order.id} className="flex items-center justify-between rounded-2xl border border-slate-200 p-3 dark:border-slate-800">
                 <div><p className="font-bold text-slate-950 dark:text-white">{order.id}</p><p className="text-xs text-slate-500">{order.date}</p></div>
                 <p className="font-black text-slate-950 dark:text-white">{money(order.total)}</p>

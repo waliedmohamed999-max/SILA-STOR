@@ -57,6 +57,9 @@ import {
   storefrontSectionLabels,
 } from "../data/storefrontThemes";
 import { categoryLabel } from "../utils/labels";
+import { zeroProductMetrics } from "../utils/zeroDataMetrics";
+
+const editorProducts = products.map(zeroProductMetrics);
 
 const sectionCategories = [
   {
@@ -634,7 +637,7 @@ function renderPreviewSection(section, theme, selectedId) {
     return `<section class="section ad${selected}" style="${style}" data-section-id="${section.id}">${toolbar}<div class="ad-content"><span class="pill">${escapeHtml(item.badge || "Ad partner")}</span><h2 data-edit-field="title">${escapeHtml(item.title || section.title || "")}</h2><p class="muted">${escapeHtml(item.subtitle || section.subtitle || "")}</p><button class="btn">${escapeHtml(item.ctaLabel || "Open")}</button></div><img class="ad-img" src="${escapeAttr(item.image || "")}" /></section>`;
   }
   if (section.type === "featuredProducts" || section.type === "catalog") {
-    return `<section class="section${selected}" style="${style}" data-section-id="${section.id}">${toolbar}<div class="newsletter"><h2 data-edit-field="title">${escapeHtml(section.title || "Products")}</h2><p class="muted">${escapeHtml(section.subtitle || "")}</p></div><div class="products">${products.slice(0, section.limit || 8).map((product) => `<article class="product"><img src="${product.image}" /><div class="product-body"><p class="muted">${escapeHtml(categoryLabel(product.category))}</p><h3>${escapeHtml(product.name)}</h3><b>${product.price} ر.س</b></div></article>`).join("")}</div></section>`;
+    return `<section class="section${selected}" style="${style}" data-section-id="${section.id}">${toolbar}<div class="newsletter"><h2 data-edit-field="title">${escapeHtml(section.title || "Products")}</h2><p class="muted">${escapeHtml(section.subtitle || "")}</p></div><div class="products">${editorProducts.slice(0, section.limit || 8).map((product) => `<article class="product"><img src="${product.image}" /><div class="product-body"><p class="muted">${escapeHtml(categoryLabel(product.category))}</p><h3>${escapeHtml(product.name)}</h3><b>${product.price} ر.س</b></div></article>`).join("")}</div></section>`;
   }
   if (section.type === "trust") {
     return `<section class="section${selected}" style="${style}" data-section-id="${section.id}">${toolbar}<div class="newsletter"><h2 data-edit-field="title">${escapeHtml(section.title || "Trust")}</h2></div><div class="trust">${(section.items || []).map((item) => `<article class="trust-card"><h3>${escapeHtml(item.title || "")}</h3><p class="muted">${escapeHtml(item.text || "")}</p></article>`).join("")}</div></section>`;
@@ -890,6 +893,6 @@ function escapeAttr(value) {
 }
 
 function categoryImage(category) {
-  const product = products.find((item) => item.category === category);
+  const product = editorProducts.find((item) => item.category === category);
   return product?.image || "";
 }

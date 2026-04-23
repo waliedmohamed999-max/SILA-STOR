@@ -27,20 +27,26 @@ import { products } from "../data/products";
 import { readAbandonedCarts } from "../services/abandonedCartService";
 import { compactMoney, money, statusTone, stockState } from "../utils/formatters";
 import { categoryLabel, dayLabel, monthLabel, statusLabel, trafficLabel } from "../utils/labels";
+import { zeroOrderMetrics, zeroProductMetrics } from "../utils/zeroDataMetrics";
 
 const chartColors = ["#6366f1", "#8b5cf6", "#10b981", "#f59e0b", "#ef4444"];
+const zeroRevenueData = revenueData.map((item) => ({ ...item, revenue: 0, orders: 0 }));
+const zeroCategorySales = categorySales.map((item) => ({ ...item, Laptops: 0, Phones: 0, Audio: 0, Cameras: 0 }));
+const zeroTrafficSources = trafficSources.map((item) => ({ ...item, value: 0 }));
 
 export default function Dashboard() {
-  const topProducts = [...products].sort((a, b) => b.sales - a.sales).slice(0, 5);
-  const lowStockProducts = products.filter((product) => product.stock <= product.threshold).slice(0, 5);
-  const urgentOrders = orders.filter((order) => ["Pending", "Processing", "Shipped"].includes(order.status)).slice(0, 6);
-  const abandonedCarts = readAbandonedCarts().filter((cart) => cart.status !== "converted");
+  const zeroProducts = products.map(zeroProductMetrics);
+  const zeroOrders = orders.map(zeroOrderMetrics);
+  const topProducts = [...zeroProducts].sort((a, b) => b.sales - a.sales).slice(0, 5);
+  const lowStockProducts = zeroProducts.filter((product) => product.stock <= product.threshold).slice(0, 5);
+  const urgentOrders = zeroOrders.filter((order) => ["Pending", "Processing", "Shipped"].includes(order.status)).slice(0, 6);
+  const abandonedCarts = readAbandonedCarts().filter((cart) => cart.status !== "converted").map((cart) => ({ ...cart, total: 0, subtotal: 0, itemsCount: 0 }));
   const recoverableCarts = abandonedCarts.filter((cart) => cart.customer?.email || cart.customer?.phone);
-  const totalRevenue = revenueData.at(-1)?.revenue || 0;
-  const totalOrders = revenueData.at(-1)?.orders || 0;
+  const totalRevenue = zeroRevenueData.at(-1)?.revenue || 0;
+  const totalOrders = zeroRevenueData.at(-1)?.orders || 0;
   const averageOrder = Math.round(totalRevenue / Math.max(totalOrders, 1));
   const abandonedValue = abandonedCarts.reduce((sum, cart) => sum + Number(cart.total || cart.subtotal || 0), 0);
-  const fulfillmentProgress = Math.round((orders.filter((order) => ["Shipped", "Delivered"].includes(order.status)).length / orders.length) * 100);
+  const fulfillmentProgress = 0;
 
   return (
     <div className="space-y-6">
@@ -87,10 +93,10 @@ export default function Dashboard() {
       </section>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="الإيرادات الشهرية" value={compactMoney(totalRevenue)} delta="+18.4%" icon={CreditCard} />
-        <StatCard title="طلبات الشهر" value={totalOrders.toLocaleString("ar-SA")} delta="+12.1%" icon={ShoppingCart} strip={[30, 44, 55, 50, 69, 72, 86]} />
-        <StatCard title="متوسط الطلب" value={money(averageOrder)} delta="+7.8%" icon={WalletCards} strip={[38, 48, 57, 63, 70, 76, 82]} />
-        <StatCard title="قيمة السلات المتروكة" value={compactMoney(abandonedValue)} delta="-3.5%" icon={BadgePercent} positive={false} strip={[70, 64, 58, 61, 49, 45, 42]} />
+        <StatCard title="الإيرادات الشهرية" value={compactMoney(totalRevenue)} delta="0%" icon={CreditCard} strip={[0, 0, 0, 0, 0, 0, 0]} />
+        <StatCard title="طلبات الشهر" value={totalOrders.toLocaleString("ar-SA")} delta="0%" icon={ShoppingCart} strip={[0, 0, 0, 0, 0, 0, 0]} />
+        <StatCard title="متوسط الطلب" value={money(averageOrder)} delta="0%" icon={WalletCards} strip={[0, 0, 0, 0, 0, 0, 0]} />
+        <StatCard title="قيمة السلات المتروكة" value={compactMoney(abandonedValue)} delta="0%" icon={BadgePercent} strip={[0, 0, 0, 0, 0, 0, 0]} />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.7fr_.9fr]">
@@ -102,7 +108,7 @@ export default function Dashboard() {
           />
           <div className="mt-5 h-72 sm:h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={revenueData}>
+              <AreaChart data={zeroRevenueData}>
                 <defs>
                   <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#6366f1" stopOpacity={0.35} />
@@ -125,15 +131,15 @@ export default function Dashboard() {
           <div className="mt-4 h-64">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={trafficSources.map((source) => ({ ...source, name: trafficLabel(source.name) }))} dataKey="value" nameKey="name" innerRadius={58} outerRadius={88} paddingAngle={4}>
-                  {trafficSources.map((source, index) => <Cell key={source.name} fill={chartColors[index]} />)}
+                <Pie data={zeroTrafficSources.map((source) => ({ ...source, name: trafficLabel(source.name) }))} dataKey="value" nameKey="name" innerRadius={58} outerRadius={88} paddingAngle={4}>
+                  {zeroTrafficSources.map((source, index) => <Cell key={source.name} fill={chartColors[index]} />)}
                 </Pie>
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
           </div>
           <div className="mt-3 grid gap-2">
-            {trafficSources.map((source, index) => (
+            {zeroTrafficSources.map((source, index) => (
               <div key={source.name} className="flex items-center justify-between gap-3 text-sm font-bold text-slate-600 dark:text-slate-300">
                 <span className="flex items-center gap-2">
                   <span className="h-2.5 w-2.5 rounded-full" style={{ background: chartColors[index] }} />
@@ -201,7 +207,7 @@ export default function Dashboard() {
           <PanelHeader title="المبيعات الأسبوعية حسب التصنيف" text="أداء التصنيفات خلال الأسبوع الحالي" badge="Catalog" />
           <div className="mt-5 h-72 sm:h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={categorySales}>
+              <BarChart data={zeroCategorySales}>
                 <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-slate-200 dark:text-slate-800" />
                 <XAxis dataKey="day" tickLine={false} axisLine={false} tickFormatter={dayLabel} />
                 <YAxis tickLine={false} axisLine={false} />

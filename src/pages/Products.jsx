@@ -28,6 +28,7 @@ import { useToast } from "../context/ToastContext";
 import { categories as baseCategories, products as seedProducts } from "../data/products";
 import { money, sortBy, statusTone, stockState } from "../utils/formatters";
 import { categoryLabel, statusLabel } from "../utils/labels";
+import { zeroProductMetrics } from "../utils/zeroDataMetrics";
 
 const storageKey = "sila-product-admin";
 
@@ -338,7 +339,7 @@ const defaultFilterStandards = [
   },
 ];
 
-const adminProductsSeed = seedProducts.map((product, index) => {
+const adminProductsSeed = seedProducts.map(zeroProductMetrics).map((product, index) => {
   const phoneStorage = ["128GB", "256GB", "512GB"][index % 3];
   const color = ["أسود", "فضي", "أبيض", "أزرق"][index % 4];
   return {

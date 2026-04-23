@@ -27,6 +27,7 @@ import { products } from "../data/products";
 import { fetchOrders, updateBackendOrderStatus } from "../services/storeBackendService";
 import { money, sortBy, statusTone } from "../utils/formatters";
 import { paymentLabel, statusLabel, tierLabel } from "../utils/labels";
+import { zeroOrderMetrics, zeroProductMetrics } from "../utils/zeroDataMetrics";
 
 const perPage = 8;
 
@@ -51,7 +52,7 @@ const priorityLabels = {
 };
 
 export default function Orders() {
-  const [orders, setOrders] = useState(() => mergeStoredOrders(seedOrders));
+  const [orders, setOrders] = useState(() => mergeStoredOrders(seedOrders).map(zeroOrderMetrics));
   const [status, setStatus] = useState("All");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState({ key: "createdAt", direction: "desc" });
@@ -78,7 +79,7 @@ export default function Orders() {
   useEffect(() => {
     if (!location.state?.createdOrder) return;
     const createdOrder = location.state.createdOrder;
-    setOrders((rows) => (rows.some((order) => order.id === createdOrder.id) ? rows : [createdOrder, ...rows]));
+    setOrders((rows) => (rows.some((order) => order.id === createdOrder.id) ? rows : [zeroOrderMetrics(createdOrder), ...rows]));
     window.history.replaceState({}, "");
   }, [location.state]);
 
@@ -371,8 +372,9 @@ export default function Orders() {
 }
 
 function CreateOrderModal({ open, existingOrders, onClose, onCreate }) {
+  const zeroedProducts = useMemo(() => products.map(zeroProductMetrics), []);
   const [form, setForm] = useState(() => createInitialOrderForm());
-  const [selectedProductId, setSelectedProductId] = useState(String(products[0]?.id || ""));
+  const [selectedProductId, setSelectedProductId] = useState(String(zeroedProducts[0]?.id || ""));
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -401,7 +403,7 @@ function CreateOrderModal({ open, existingOrders, onClose, onCreate }) {
   };
 
   const addItem = () => {
-    const product = products.find((item) => String(item.id) === String(selectedProductId)) || products[0];
+    const product = zeroedProducts.find((item) => String(item.id) === String(selectedProductId)) || zeroedProducts[0];
     if (!product) return;
     setForm((current) => {
       const exists = current.items.find((item) => item.productId === product.id);
@@ -522,9 +524,9 @@ function CreateOrderModal({ open, existingOrders, onClose, onCreate }) {
         timeline: createOrderTimeline(form.status, createdAt, form.deliveryMethod, trackingNumber),
       };
 
-      onCreate(order);
+      onCreate(zeroOrderMetrics(order));
       setForm(createInitialOrderForm());
-      setSelectedProductId(String(products[0]?.id || ""));
+      setSelectedProductId(String(zeroedProducts[0]?.id || ""));
       setErrors({});
       setSubmitting(false);
       onClose();
@@ -558,7 +560,7 @@ function CreateOrderModal({ open, existingOrders, onClose, onCreate }) {
                 onChange={(event) => setSelectedProductId(event.target.value)}
                 className="rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold outline-none focus:border-accent dark:border-slate-800 dark:bg-slate-950 dark:text-white"
               >
-                {products.map((product) => (
+                {zeroedProducts.map((product) => (
                   <option key={product.id} value={product.id}>{product.name}</option>
                 ))}
               </select>
@@ -1010,7 +1012,7 @@ function FormTextarea({ label, value, onChange, className = "" }) {
 }
 
 function createInitialOrderForm() {
-  const product = products[0];
+  const product = zeroProductMetrics(products[0]);
   return {
     customerName: "",
     customerPhone: "",
